@@ -1,0 +1,20 @@
+//Configuración de conexión a PostgreSQL
+const { Pool } = require('pg');
+require('dotenv').config();
+
+const pool = new Pool({
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  ssl: {
+    rejectUnauthorized: false, // importante para RDS si tiene SSL activado
+  },
+});
+
+pool.on('connect', () => {
+  console.log('Conectado a PostgreSQL en AWS RDS');
+});
+
+module.exports = pool;
