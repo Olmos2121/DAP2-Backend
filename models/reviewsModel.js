@@ -39,10 +39,19 @@ async function addLike(review_id, user_id) {
   return result.rows[0] || { message: "Ya diste like a esta reseña" };
 }
 
+async function removeLike(review_id, user_id) {
+  const result = await pool.query(
+    `DELETE FROM likes WHERE review_id = $1 AND user_id = $2 RETURNING *`,
+    [review_id, user_id]
+  );
+  return result.rowCount > 0;
+}
+
 module.exports = {
   createReview,
   getReview,
   deleteReview,
   getLikes,
   addLike,
+  removeLike,
 };

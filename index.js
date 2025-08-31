@@ -1,16 +1,17 @@
 //Punto de entrada del servidor
+require('dotenv').config();
 const express = require('express');
 const pool = require('./db');
-require('dotenv').config();
 
 const reviewsRoutes = require('./routes/reviews');
-const usersRoutes = require('./routes/users');
+console.log('typeof reviewsRoutes: ', typeof reviewsRoutes);
+//const usersRoutes = require('./routes/users');
 
 const app = express();
 app.use(express.json());
 
 app.use('/reviews', reviewsRoutes);
-app.use('/users', usersRoutes);
+//app.use('/users', usersRoutes);
 
 // Ruta de prueba
 app.get('/', (req, res) => {

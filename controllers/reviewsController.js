@@ -47,10 +47,20 @@ async function addLike(req, res) {
   }
 }
 
+async function removeLike(req, res) {
+  try {
+    await model.removeLike(req.params.id, req.body.user_id);
+    res.json({ message: 'Like eliminado' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 module.exports = {
   createReview,
   getReview,
   deleteReview,
   getLikes,
   addLike,
+  removeLike,
 };
