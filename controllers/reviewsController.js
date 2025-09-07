@@ -29,38 +29,38 @@ async function deleteReview(req, res) {
   }
 }
 
-async function getLikes(req, res) {
+/* async function getLikes(req, res) {
   try {
     const likes = await model.getLikes(req.params.id);
     res.json(likes);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-}
+} */
 
-async function addLike(req, res) {
+/* async function addLike(req, res) {
   try {
     const like = await model.addLike(req.params.id, req.body.user_id);
     res.status(201).json(like);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-}
+} */
 
-async function removeLike(req, res) {
+/* async function removeLike(req, res) {
   try {
     await model.removeLike(req.params.id, req.body.user_id);
     res.json({ message: 'Like eliminado' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-}
+ }*/
 
 module.exports = {
   createReview,
   getReview,
   deleteReview,
-  getLikes,
-  addLike,
-  removeLike,
+  //getLikes,
+  //addLike,
+  //removeLike,
 };

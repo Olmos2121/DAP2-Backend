@@ -19,7 +19,7 @@ async function deleteReview(id) {
   return result.rowCount > 0;
 }
 
-async function getLikes(review_id) {
+/* async function getLikes(review_id) {
   const result = await pool.query(
     `SELECT u.id, u.name
      FROM likes l
@@ -28,30 +28,30 @@ async function getLikes(review_id) {
     [review_id]
   );
   return result.rows;
-}
+} */
 
-async function addLike(review_id, user_id) {
+/* async function addLike(review_id, user_id) {
   const result = await pool.query(
     `INSERT INTO likes (review_id, user_id)
      VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING *`,
     [review_id, user_id]
   );
   return result.rows[0] || { message: "Ya diste like a esta reseña" };
-}
+} */
 
-async function removeLike(review_id, user_id) {
+/* async function removeLike(review_id, user_id) {
   const result = await pool.query(
     `DELETE FROM likes WHERE review_id = $1 AND user_id = $2 RETURNING *`,
     [review_id, user_id]
   );
   return result.rowCount > 0;
-}
+} */
 
 module.exports = {
   createReview,
   getReview,
   deleteReview,
-  getLikes,
-  addLike,
-  removeLike,
+  //getLikes,
+  //addLike,
+  //removeLike,
 };
