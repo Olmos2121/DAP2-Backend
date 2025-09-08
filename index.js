@@ -1,37 +1,20 @@
-//Punto de entrada del servidor
-require('dotenv').config();
-const express = require('express');
-const pool = require('./db');
+require("dotenv").config();
+const express = require("express");
+const swaggerUi = require("swagger-ui-express");
+const swaggerFile = require("./swagger-output.json");
 
-const reviewsRoutes = require('./routes/reviews');
-console.log('typeof reviewsRoutes: ', typeof reviewsRoutes);
-//const usersRoutes = require('./routes/users');
-
+const reviewsRoutes = require("./routes/reviews");
 const app = express();
 app.use(express.json());
 
-app.use('/reviews', reviewsRoutes);
-//app.use('/users', usersRoutes);
+// Swagger UI
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerFile));
 
-// Ruta de prueba
-app.get('/', (req, res) => {
-  res.json({ message: 'API funcionando 🚀' });
-});
-/* app.get('/', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT NOW()');
-    res.json({ message: 'Conectado a PostgreSQL en AWS', time: result.rows[0].now });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error en la conexión con PostgreSQL' });
-  }
-});
- */
-// Levantar servidor
+// Rutas
+app.use("/reviews", reviewsRoutes);
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`✅ Server http://localhost:${PORT}`);
+  console.log(`📘 Swagger http://localhost:${PORT}/api-docs`);
 });
-
-//const PORT = process.env.PORT || 3000;
-//app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));
