@@ -1,0 +1,199 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Movie Reviews API",
+    "description": "API para reseñas de películas",
+    "version": "1.0.0"
+  },
+  "host": "localhost:3000",
+  "basePath": "/",
+  "tags": [
+    {
+      "name": "Reviews",
+      "description": "Operaciones sobre reseñas"
+    }
+  ],
+  "schemes": [
+    "http"
+  ],
+  "paths": {
+    "/reviews/": {
+      "post": {
+        "description": "",
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/reviews/filter": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "movie_id",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "min_rating",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "max_rating",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "has_spoilers",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/reviews/{id}": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      },
+      "delete": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Review": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "number",
+          "example": 1
+        },
+        "movie_id": {
+          "type": "number",
+          "example": 456
+        },
+        "user_id": {
+          "type": "number",
+          "example": 789
+        },
+        "rating": {
+          "type": "number",
+          "example": 8.5
+        },
+        "has_spoilers": {
+          "type": "boolean",
+          "example": false
+        },
+        "body": {
+          "type": "string",
+          "example": "Excelente..."
+        },
+        "created_at": {
+          "type": "string",
+          "example": "2025-01-01T00:00:00Z"
+        },
+        "updated_at": {
+          "type": "string",
+          "example": "2025-01-01T00:00:00Z"
+        }
+      }
+    },
+    "ReviewCreateInput": {
+      "type": "object",
+      "properties": {
+        "movie_id": {
+          "type": "number",
+          "example": 456
+        },
+        "user_id": {
+          "type": "number",
+          "example": 789
+        },
+        "rating": {
+          "type": "number",
+          "example": 8.5
+        },
+        "has_spoilers": {
+          "type": "boolean",
+          "example": false
+        },
+        "body": {
+          "type": "string",
+          "example": "Texto..."
+        }
+      }
+    }
+  }
+}
