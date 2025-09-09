@@ -6,7 +6,12 @@ const controller = require('../controllers/reviewsController');
 router.post('/', controller.createReview);
 router.get('/filter', controller.filterReviews);
 router.get('/:id', controller.getReview);
+router.get('/recent', controller.getRecentReviews);
 router.delete('/:id', controller.deleteReview);
+
+//router.get('/movies/:id', controller.getReviewsByMovie);
+//router.get('/users/:id', controller.getReviewsByUser);
+
 
 // Comentado Likes
 //router.get('/:id/likes', controller.getLikes);

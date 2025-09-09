@@ -30,6 +30,68 @@ async function getReview(req, res) {
   }
 }
 
+async function getRecentReviews(req, res) {
+  try {
+    const reviews = await model.getRecentReviews(10);
+    res.json(reviews);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+/* async function getReviewsByMovie(req, res) {
+  try {
+    const { id } = req.params;
+    const { sort = 'recent', limit = '10', offset = '0', min_rating, max_rating, has_spoilers } = req.query;
+
+    const orderBy = VALID_SORTS[sort] || VALID_SORTS.recent;
+    const pageSize = Math.min(parsePositiveInt(limit, 20), 100);
+    const pageOffset = parsePositiveInt(offset, 0);
+
+    const filters = {
+      movie_id: id,
+      min_rating: min_rating !== undefined ? Number(min_rating) : undefined,
+      max_rating: max_rating !== undefined ? Number(max_rating) : undefined,
+      has_spoilers: has_spoilers === 'true' ? true : has_spoilers === 'false' ? false : undefined,
+    };
+
+    const { rows, total } = await model.getReviewsByMovie(id, filters, { orderBy, limit: pageSize, offset: pageOffset });
+
+    res.set('X-Total-Count', String(total));
+    res.json({ total, limit: pageSize, offset: pageOffset, data: rows });
+  } catch (err) {
+    console.error('getReviewsByMovie error:', err);
+    res.status(500).json({ error: err.message });
+  }
+} */
+
+/* async function getReviewsByUser(req, res) {
+  try {
+    const { id } = req.params;
+    const { sort = 'recent', limit = '10', offset = '0', min_rating, max_rating, has_spoilers } = req.query;
+
+    const orderBy = VALID_SORTS[sort] || VALID_SORTS.recent;
+    const pageSize = Math.min(parsePositiveInt(limit, 20), 100);
+    const pageOffset = parsePositiveInt(offset, 0);
+
+    const filters = {
+      user_id: id,
+      min_rating: min_rating !== undefined ? Number(min_rating) : undefined,
+      max_rating: max_rating !== undefined ? Number(max_rating) : undefined,
+      has_spoilers: has_spoilers === 'true' ? true : has_spoilers === 'false' ? false : undefined,
+    };
+
+    const { rows, total } = await model.getReviewsByUser(id, filters, { orderBy, limit: pageSize, offset: pageOffset });
+
+    res.set('X-Total-Count', String(total));
+    res.json({ total, limit: pageSize, offset: pageOffset, data: rows });
+  } catch (err) {
+    console.error('getReviewsByUser error:', err);
+    res.status(500).json({ error: err.message });
+  }
+} */
+
+
 async function deleteReview(req, res) {
   try {
     const deleted = await model.deleteReview(req.params.id);
@@ -111,6 +173,9 @@ module.exports = {
   getReview,
   deleteReview,
   filterReviews,
+  getRecentReviews,
+  //getReviewsByMovie,
+  //getReviewsByUser,
   //getLikes,
   //addLike,
   //removeLike,

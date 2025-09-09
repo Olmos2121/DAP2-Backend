@@ -14,6 +14,23 @@ async function getReview(id) {
   return result.rows[0];
 }
 
+async function getRecentReviews(limit = 10) {
+  const result = await pool.query(
+    `SELECT * FROM reviews ORDER BY created_at DESC LIMIT $1`,
+    [limit]
+  );
+  return result.rows;
+}
+
+/* async function getReviewsByMovie(movie_id, filters, options) {
+  return filterReviews({ ...filters, movie_id }, options);
+} */
+
+/* async function getReviewsByUser(user_id, filters, options) {
+  return filterReviews({ ...filters, user_id }, options);
+} */
+
+
 async function deleteReview(id) {
   const result = await pool.query('DELETE FROM reviews WHERE id = $1 RETURNING *', [id]);
   return result.rowCount > 0;
@@ -102,6 +119,9 @@ module.exports = {
   getReview,
   deleteReview,
   filterReviews,
+  getRecentReviews,
+  //getReviewsByMovie,
+  //getReviewsByUser,
   //getLikes,
   //addLike,
   //removeLike,
