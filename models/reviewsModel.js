@@ -1,17 +1,32 @@
 const pool = require('../db');
 
+const PK = 'review_id';
+
+const BASE_COLUMNS = `
+  r.review_id, r.user_id, r.movie_id, r.rating, r.has_spoilers,
+  r.body, r.status, r.edit_count, r.created_at, r.updated_at, r.source
+`;
+
 async function createReview({ movie_id, user_id, rating, has_spoilers, body }) {
-  const result = await pool.query(
-    `INSERT INTO reviews (movie_id, user_id, rating, has_spoilers, body)
-     VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-    [movie_id, user_id, rating, has_spoilers, body]
-  );
-  return result.rows[0];
+  const sql = `
+    INSERT INTO reviews (movie_id, user_id, rating, has_spoilers, body)
+    VALUES ($1, $2, $3, $4, $5)
+    RETURNING ${BASE_COLUMNS}
+  `;
+  const params = [movie_id, user_id, rating, has_spoilers, body];
+  const { rows } = await pool.query(sql, params);
+  return rows[0];
 }
 
 async function getReview(id) {
-  const result = await pool.query('SELECT * FROM reviews WHERE id = $1', [id]);
-  return result.rows[0];
+  const sql = `
+    SELECT ${BASE_COLUMNS}
+    FROM reviews r
+    WHERE r.${PK} = $1
+    LIMIT 1
+  `;
+  const { rows } = await pool.query(sql, [id]);
+  return rows[0];
 }
 
 async function getRecentReviews(limit = 10) {
@@ -32,8 +47,13 @@ async function getRecentReviews(limit = 10) {
 
 
 async function deleteReview(id) {
-  const result = await pool.query('DELETE FROM reviews WHERE id = $1 RETURNING *', [id]);
-  return result.rowCount > 0;
+  const sql = `
+    DELETE FROM reviews
+    WHERE ${PK} = $1
+    RETURNING ${PK}
+  `;
+  const { rowCount } = await pool.query(sql, [id]);
+  return rowCount > 0;
 }
 
 async function filterReviews(filters, options) {
@@ -41,88 +61,51 @@ async function filterReviews(filters, options) {
   const { orderBy, limit, offset } = options;
 
   const params = [];
-  let idx = 1;
+  let i = 1;
 
-  // base con COUNT OVER para total en una sola pasada
   let sql = `
     SELECT
-      r.*,
+      ${BASE_COLUMNS},
       COUNT(*) OVER() AS total_count
     FROM reviews r
     WHERE 1=1
   `;
 
   if (movie_id) {
-    sql += ` AND r.movie_id = $${idx++}`;
+    sql += ` AND r.movie_id = $${i++}`;
     params.push(movie_id);
   }
   if (user_id) {
-    sql += ` AND r.user_id = $${idx++}`;
+    sql += ` AND r.user_id = $${i++}`;
     params.push(user_id);
   }
   if (min_rating !== undefined) {
-    sql += ` AND r.rating >= $${idx++}`;
+    sql += ` AND r.rating >= $${i++}`;
     params.push(min_rating);
   }
   if (max_rating !== undefined) {
-    sql += ` AND r.rating <= $${idx++}`;
+    sql += ` AND r.rating <= $${i++}`;
     params.push(max_rating);
   }
   if (typeof has_spoilers === 'boolean') {
-    sql += ` AND r.has_spoilers = $${idx++}`;
+    sql += ` AND r.has_spoilers = $${i++}`;
     params.push(has_spoilers);
   }
 
-  sql += ` ORDER BY ${orderBy} LIMIT $${idx++} OFFSET $${idx++}`;
+  sql += ` ORDER BY ${orderBy} LIMIT $${i++} OFFSET $${i++}`;
   params.push(limit, offset);
 
-  const result = await pool.query(sql, params);
-  const rows = result.rows;
+  const { rows } = await pool.query(sql, params);
   const total = rows.length ? Number(rows[0].total_count) : 0;
 
-  // limpiar la columna auxiliar
-  rows.forEach(r => delete r.total_count);
+  for (const r of rows) delete r.total_count;
 
   return { rows, total };
 }
-
-/* async function getLikes(review_id) {
-  const result = await pool.query(
-    `SELECT u.id, u.name
-     FROM likes l
-     JOIN users u ON l.user_id = u.id
-     WHERE l.review_id = $1`,
-    [review_id]
-  );
-  return result.rows;
-} */
-
-/* async function addLike(review_id, user_id) {
-  const result = await pool.query(
-    `INSERT INTO likes (review_id, user_id)
-     VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING *`,
-    [review_id, user_id]
-  );
-  return result.rows[0] || { message: "Ya diste like a esta reseña" };
-} */
-
-/* async function removeLike(review_id, user_id) {
-  const result = await pool.query(
-    `DELETE FROM likes WHERE review_id = $1 AND user_id = $2 RETURNING *`,
-    [review_id, user_id]
-  );
-  return result.rowCount > 0;
-} */
 
 module.exports = {
   createReview,
   getReview,
   deleteReview,
   filterReviews,
-  getRecentReviews,
-  //getReviewsByMovie,
-  //getReviewsByUser,
-  //getLikes,
-  //addLike,
-  //removeLike,
 };

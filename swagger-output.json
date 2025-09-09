@@ -20,12 +20,35 @@
     "/reviews/": {
       "post": {
         "description": "",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "movie_id": {
+                  "example": "any"
+                },
+                "user_id": {
+                  "example": "any"
+                },
+                "rating": {
+                  "example": "any"
+                },
+                "has_spoilers": {
+                  "example": "any"
+                },
+                "body": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
         "responses": {
           "201": {
             "description": "Created"
-          },
-          "500": {
-            "description": "Internal Server Error"
           }
         }
       }
@@ -124,6 +147,16 @@
           },
           "404": {
             "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/reviews/recent": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
           },
           "500": {
             "description": "Internal Server Error"
