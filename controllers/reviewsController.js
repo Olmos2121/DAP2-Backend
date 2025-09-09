@@ -1,4 +1,5 @@
 const model = require('../models/reviewsModel');
+const { validateReviewData, validateCommentData, validatePagination, sanitizeInput } = require('../utils/validation');
 
 const VALID_SORTS = {
   recent: 'created_at DESC',
@@ -13,7 +14,20 @@ function parsePositiveInt(value, defaultValue) {
 
 async function createReview(req, res) {
   try {
-    const review = await model.createReview(req.body);
+    // Validar datos de entrada
+    const errors = validateReviewData(req.body);
+    if (errors.length > 0) {
+      return res.status(400).json({ error: 'Datos inválidos', details: errors });
+    }
+
+    // Sanitizar contenido
+    const sanitizedData = {
+      ...req.body,
+      title: sanitizeInput(req.body.title),
+      body: sanitizeInput(req.body.body),
+    };
+
+    const review = await model.createReview(sanitizedData);
     res.status(201).json(review);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -23,6 +37,16 @@ async function createReview(req, res) {
 async function getReview(req, res) {
   try {
     const review = await model.getReview(req.params.id);
+    if (!review) return res.status(404).json({ error: 'Reseña no encontrada' });
+    res.json(review);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function updateReview(req, res) {
+  try {
+    const review = await model.updateReview(req.params.id, req.body);
     if (!review) return res.status(404).json({ error: 'Reseña no encontrada' });
     res.json(review);
   } catch (err) {
@@ -79,39 +103,79 @@ async function filterReviews(req, res) {
   }
 }
 
-/* async function getLikes(req, res) {
+async function getLikes(req, res) {
   try {
     const likes = await model.getLikes(req.params.id);
     res.json(likes);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-} */
+}
 
-/* async function addLike(req, res) {
+async function addLike(req, res) {
   try {
     const like = await model.addLike(req.params.id, req.body.user_id);
     res.status(201).json(like);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-} */
+}
 
-/* async function removeLike(req, res) {
+async function removeLike(req, res) {
   try {
-    await model.removeLike(req.params.id, req.body.user_id);
+    const removed = await model.removeLike(req.params.id, req.body.user_id);
+    if (!removed) return res.status(404).json({ error: 'Like no encontrado' });
     res.json({ message: 'Like eliminado' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
- }*/
+}
+
+async function getComments(req, res) {
+  try {
+    const comments = await model.getComments(req.params.id);
+    res.json(comments);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function addComment(req, res) {
+  try {
+    // Validar datos de entrada
+    const errors = validateCommentData(req.body);
+    if (errors.length > 0) {
+      return res.status(400).json({ error: 'Datos inválidos', details: errors });
+    }
+
+    const sanitizedComment = sanitizeInput(req.body.comment);
+    const comment = await model.addComment(req.params.id, req.body.user_id, sanitizedComment);
+    res.status(201).json(comment);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function deleteComment(req, res) {
+  try {
+    const deleted = await model.deleteComment(req.params.commentId, req.body.user_id);
+    if (!deleted) return res.status(404).json({ error: 'Comentario no encontrado' });
+    res.json({ message: 'Comentario eliminado' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
 
 module.exports = {
   createReview,
   getReview,
+  updateReview,
   deleteReview,
   filterReviews,
-  //getLikes,
-  //addLike,
-  //removeLike,
+  getLikes,
+  addLike,
+  removeLike,
+  getComments,
+  addComment,
+  deleteComment,
 };

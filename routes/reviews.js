@@ -6,11 +6,15 @@ const controller = require('../controllers/reviewsController');
 router.post('/', controller.createReview);
 router.get('/filter', controller.filterReviews);
 router.get('/:id', controller.getReview);
+router.put('/:id', controller.updateReview);
 router.delete('/:id', controller.deleteReview);
 
-// Comentado Likes
-//router.get('/:id/likes', controller.getLikes);
-//router.post('/:id/likes', controller.addLike);
-//router.delete('/:id/likes', controller.removeLike);
+// Likes y comentarios
+router.get('/:id/likes', controller.getLikes);
+router.post('/:id/likes', controller.addLike);
+router.delete('/:id/likes', controller.removeLike);
+router.get('/:id/comments', controller.getComments);
+router.post('/:id/comments', controller.addComment);
+router.delete('/comments/:commentId', controller.deleteComment);
 
 module.exports = router;
