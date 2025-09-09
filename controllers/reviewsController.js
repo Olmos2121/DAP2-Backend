@@ -14,9 +14,14 @@ function parsePositiveInt(value, defaultValue) {
 
 async function createReview(req, res) {
   try {
+    console.log('🔍 BACKEND - Datos recibidos:', req.body);
+    
     // Validar datos de entrada
     const errors = validateReviewData(req.body);
+    console.log('🔍 BACKEND - Errores de validación:', errors);
+    
     if (errors.length > 0) {
+      console.log('❌ BACKEND - Validación falló:', errors);
       return res.status(400).json({ error: 'Datos inválidos', details: errors });
     }
 
