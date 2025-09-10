@@ -4,7 +4,8 @@ const controller = require('../controllers/reviewsController');
 
 // CRUD Reseñas
 router.post('/', controller.createReview);
-router.get('/filter', controller.filterReviews);
+//router.get('/filter', controller.filterReviews);
+router.get('/', controller.filterReviews);
 router.get('/:id', controller.getReview);
 router.put('/:id', controller.updateReview);
 router.delete('/:id', controller.deleteReview);

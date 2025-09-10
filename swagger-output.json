@@ -213,9 +213,7 @@
             "description": "Internal Server Error"
           }
         }
-      }
-    },
-    "/reviews/filter": {
+      },
       "get": {
         "description": "",
         "produces": [
