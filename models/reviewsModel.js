@@ -82,7 +82,6 @@ async function filterReviews(filters, options) {
     const params = [];
     let idx = 1;
 
-    // Consulta optimizada con JOINs para obtener información adicional
     let sql = `
       SELECT
         r.*,
@@ -90,12 +89,16 @@ async function filterReviews(filters, options) {
         u.profile_image as user_profile_image,
         m.title as movie_title,
         m.poster_url as movie_poster,
-        COUNT(rl.id) as likes_count,
+        COALESCE(l.likes_count, 0) as likes_count,
         COUNT(*) OVER() AS total_count
       FROM reviews r
-      LEFT JOIN users u ON r.user_id = u.id
-      LEFT JOIN movies m ON r.movie_id = m.id
-      LEFT JOIN review_likes rl ON r.id = rl.review_id
+      JOIN users u ON r.user_id = u.id
+      JOIN movies m ON r.movie_id = m.id
+      LEFT JOIN (
+        SELECT review_id, COUNT(*) as likes_count
+        FROM review_likes
+        GROUP BY review_id
+      ) l ON r.id = l.review_id
       WHERE 1=1
     `;
 
@@ -120,15 +123,17 @@ async function filterReviews(filters, options) {
       params.push(has_spoilers);
     }
 
-    sql += ` GROUP BY r.id, u.name, u.profile_image, m.title, m.poster_url`;
-    sql += ` ORDER BY ${orderBy} LIMIT $${idx++} OFFSET $${idx++}`;
-    params.push(limit, offset);
+    sql += ` ORDER BY ${orderBy}`;
+
+    if (limit) {
+      sql += ` LIMIT $${idx++} OFFSET $${idx++}`;
+      params.push(limit, offset);
+    }
 
     const result = await pool.query(sql, params);
     const rows = result.rows;
     const total = rows.length ? Number(rows[0].total_count) : 0;
 
-    // limpiar la columna auxiliar
     rows.forEach(r => delete r.total_count);
 
     return { rows, total };
@@ -137,6 +142,7 @@ async function filterReviews(filters, options) {
     throw error;
   }
 }
+
 
 // Funciones para manejo de likes
 async function getLikes(review_id) {

@@ -171,6 +171,25 @@ async function deleteComment(req, res) {
   }
 }
 
+// 👇 NUEVO: endpoint para estadísticas del dashboard
+
+async function getStats(req, res) {
+  try {
+    const result = await pool.query(`
+      SELECT
+        (SELECT COUNT(*) FROM reviews) AS total_reviews,
+        (SELECT COUNT(DISTINCT movie_id) FROM reviews) AS movies_reviewed,
+        (SELECT COUNT(DISTINCT user_id) FROM reviews) AS active_users,
+        COALESCE((SELECT COUNT(*) FROM review_likes), 0) AS total_likes
+    `);
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('getStats error:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+
 module.exports = {
   createReview,
   getReview,
@@ -183,4 +202,5 @@ module.exports = {
   getComments,
   addComment,
   deleteComment,
+  getStats,
 };
