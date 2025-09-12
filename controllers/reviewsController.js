@@ -1,4 +1,5 @@
 const model = require('../models/reviewsModel');
+const { validateReviewData, validateCommentData, validatePagination, sanitizeInput } = require('../utils/validation');
 
 const VALID_SORTS = {
   recent:      'r.created_at DESC, r.review_id DESC',
@@ -32,28 +33,26 @@ function badRequest(res, message) {
 
 async function createReview(req, res) {
   try {
-    const { movie_id, user_id, rating, has_spoilers, body } = req.body ?? {};
-
-    if (!movie_id) return badRequest(res, 'movie_id es requerido');
-    if (!user_id)  return badRequest(res, 'user_id es requerido');
-    if (rating === undefined) return badRequest(res, 'rating es requerido');
-    const r = Number(rating);
-    if (!Number.isFinite(r) || r < 0 || r > 5) {
-      return badRequest(res, 'rating debe ser numérico entre 0 y 5');
-    }
-    if (typeof has_spoilers !== 'boolean') {
-      return badRequest(res, 'has_spoilers debe ser booleano');
-    }
-    if (typeof body !== 'string' || !body.trim()) {
-      return badRequest(res, 'body es requerido (texto no vacío)');
+    console.log('🔍 BACKEND - Datos recibidos:', req.body);
+    
+    // Validar datos de entrada
+    const errors = validateReviewData(req.body);
+    console.log('🔍 BACKEND - Errores de validación:', errors);
+    
+    if (errors.length > 0) {
+      console.log('❌ BACKEND - Validación falló:', errors);
+      return res.status(400).json({ error: 'Datos inválidos', details: errors });
     }
 
-    const created = await model.createReview({ movie_id, user_id, rating: Number(rating), has_spoilers, body: body.trim() });
+    // Sanitizar contenido
+    const sanitizedData = {
+      ...req.body,
+      title: sanitizeInput(req.body.title),
+      body: sanitizeInput(req.body.body),
+    };
 
-    res.status(201)
-       .location(`/reviews/${created.id}`)
-       .json(created);
-
+    const review = await model.createReview(sanitizedData);
+    res.status(201).json(review);
   } catch (err) {
     const mapped = mapPgErrorToHttp(err);
     res.status(mapped.status).json({ error: mapped.message });
@@ -70,78 +69,15 @@ async function getReview(req, res) {
   }
 }
 
-async function getRecentReviews(req, res) {
+async function updateReview(req, res) {
   try {
-    const reviews = await model.getRecentReviews(10);
-    res.json(reviews);
+    const review = await model.updateReview(req.params.id, req.body);
+    if (!review) return res.status(404).json({ error: 'Reseña no encontrada' });
+    res.json(review);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 }
-
-async function approveReview(req, res) {
-  try {
-    const approved = await model.approveReview(req.params.id);
-    if (!approved) return res.status(404).json({ error: 'Reseña no encontrada' });
-    res.json({ message: 'Reseña aprobada' });
-  } catch (err) {
-    const mapped = mapPgErrorToHttp(err);
-    res.status(mapped.status).json({ error: mapped.message });
-  }
-}
-
-/* async function getReviewsByMovie(req, res) {
-  try {
-    const { id } = req.params;
-    const { sort = 'recent', limit = '10', offset = '0', min_rating, max_rating, has_spoilers } = req.query;
-
-    const orderBy = VALID_SORTS[sort] || VALID_SORTS.recent;
-    const pageSize = Math.min(parsePositiveInt(limit, 20), 100);
-    const pageOffset = parsePositiveInt(offset, 0);
-
-    const filters = {
-      movie_id: id,
-      min_rating: min_rating !== undefined ? Number(min_rating) : undefined,
-      max_rating: max_rating !== undefined ? Number(max_rating) : undefined,
-      has_spoilers: has_spoilers === 'true' ? true : has_spoilers === 'false' ? false : undefined,
-    };
-
-    const { rows, total } = await model.getReviewsByMovie(id, filters, { orderBy, limit: pageSize, offset: pageOffset });
-
-    res.set('X-Total-Count', String(total));
-    res.json({ total, limit: pageSize, offset: pageOffset, data: rows });
-  } catch (err) {
-    console.error('getReviewsByMovie error:', err);
-    res.status(500).json({ error: err.message });
-  }
-} */
-
-/* async function getReviewsByUser(req, res) {
-  try {
-    const { id } = req.params;
-    const { sort = 'recent', limit = '10', offset = '0', min_rating, max_rating, has_spoilers } = req.query;
-
-    const orderBy = VALID_SORTS[sort] || VALID_SORTS.recent;
-    const pageSize = Math.min(parsePositiveInt(limit, 20), 100);
-    const pageOffset = parsePositiveInt(offset, 0);
-
-    const filters = {
-      user_id: id,
-      min_rating: min_rating !== undefined ? Number(min_rating) : undefined,
-      max_rating: max_rating !== undefined ? Number(max_rating) : undefined,
-      has_spoilers: has_spoilers === 'true' ? true : has_spoilers === 'false' ? false : undefined,
-    };
-
-    const { rows, total } = await model.getReviewsByUser(id, filters, { orderBy, limit: pageSize, offset: pageOffset });
-
-    res.set('X-Total-Count', String(total));
-    res.json({ total, limit: pageSize, offset: pageOffset, data: rows });
-  } catch (err) {
-    console.error('getReviewsByUser error:', err);
-    res.status(500).json({ error: err.message });
-  }
-} */
-
 
 async function deleteReview(req, res) {
   try {
@@ -201,11 +137,99 @@ async function filterReviews(req, res) {
   }
 }
 
+async function getLikes(req, res) {
+  try {
+    const likes = await model.getLikes(req.params.id);
+    res.json(likes);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function addLike(req, res) {
+  try {
+    const like = await model.addLike(req.params.id, req.body.user_id);
+    res.status(201).json(like);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function removeLike(req, res) {
+  try {
+    const removed = await model.removeLike(req.params.id, req.body.user_id);
+    if (!removed) return res.status(404).json({ error: 'Like no encontrado' });
+    res.json({ message: 'Like eliminado' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function getComments(req, res) {
+  try {
+    const comments = await model.getComments(req.params.id);
+    res.json(comments);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function addComment(req, res) {
+  try {
+    // Validar datos de entrada
+    const errors = validateCommentData(req.body);
+    if (errors.length > 0) {
+      return res.status(400).json({ error: 'Datos inválidos', details: errors });
+    }
+
+    const sanitizedComment = sanitizeInput(req.body.comment);
+    const comment = await model.addComment(req.params.id, req.body.user_id, sanitizedComment);
+    res.status(201).json(comment);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function deleteComment(req, res) {
+  try {
+    const deleted = await model.deleteComment(req.params.commentId, req.body.user_id);
+    if (!deleted) return res.status(404).json({ error: 'Comentario no encontrado' });
+    res.json({ message: 'Comentario eliminado' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+// 👇 NUEVO: endpoint para estadísticas del dashboard
+
+async function getStats(req, res) {
+  try {
+    const result = await pool.query(`
+      SELECT
+        (SELECT COUNT(*) FROM reviews) AS total_reviews,
+        (SELECT COUNT(DISTINCT movie_id) FROM reviews) AS movies_reviewed,
+        (SELECT COUNT(DISTINCT user_id) FROM reviews) AS active_users,
+        COALESCE((SELECT COUNT(*) FROM review_likes), 0) AS total_likes
+    `);
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('getStats error:', err);
+    res.status(500).json({ error: err.message });
+  }
+}
+
+
 module.exports = {
   createReview,
   getReview,
+  updateReview,
   deleteReview,
   filterReviews,
-  getRecentReviews,
-  approveReview,
+  getLikes,
+  addLike,
+  removeLike,
+  getComments,
+  addComment,
+  deleteComment,
+  getStats,
 };
