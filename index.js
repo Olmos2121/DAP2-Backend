@@ -1,4 +1,5 @@
 require("dotenv").config();
+require('./workers/aiModerationWorker');
 const express = require("express");
 const swaggerUi = require("swagger-ui-express");
 const swaggerFile = require("./swagger-output.json");

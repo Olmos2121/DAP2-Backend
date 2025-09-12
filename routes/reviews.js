@@ -8,6 +8,7 @@ router.get('/filter', controller.filterReviews);
 router.get('/:id', controller.getReview);
 router.get('/recent', controller.getRecentReviews);
 router.delete('/:id', controller.deleteReview);
+router.post('/:id/approve', controller.approveReview);
 
 //router.get('/movies/:id', controller.getReviewsByMovie);
 //router.get('/users/:id', controller.getReviewsByUser);

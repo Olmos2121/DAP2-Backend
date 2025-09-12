@@ -1,10 +1,20 @@
 const model = require('../models/reviewsModel');
 
 const VALID_SORTS = {
-  recent: 'r.created_at DESC, r.id DESC',
-  rating_asc: 'r.rating ASC, r.created_at DESC',
+  recent:      'r.created_at DESC, r.review_id DESC',
+  rating_asc:  'r.rating ASC, r.created_at DESC',
   rating_desc: 'r.rating DESC, r.created_at DESC',
 };
+
+function mapPgErrorToHttp(err) {
+  switch (err.code) {
+    case '23502': return { status: 400, message: 'Dato requerido ausente (NOT NULL violation).' };
+    case '23503': return { status: 409, message: 'Referencia inválida (FK violation).' };
+    case '23505': return { status: 409, message: 'Valor duplicado (UNIQUE violation).' };
+    case '23514': return { status: 400, message: 'Restricción CHECK violada.' };
+    default:      return { status: 500, message: err.message || 'Error en base de datos.' };
+  }
+}
 
 function parsePositiveInt(value, defaultValue) {
   const parsed = parseInt(value, 10);
@@ -41,7 +51,7 @@ async function createReview(req, res) {
     const created = await model.createReview({ movie_id, user_id, rating: Number(rating), has_spoilers, body: body.trim() });
 
     res.status(201)
-       .location(`/reviews/${created.review_id}`)
+       .location(`/reviews/${created.id}`)
        .json(created);
 
   } catch (err) {
@@ -66,6 +76,17 @@ async function getRecentReviews(req, res) {
     res.json(reviews);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+}
+
+async function approveReview(req, res) {
+  try {
+    const approved = await model.approveReview(req.params.id);
+    if (!approved) return res.status(404).json({ error: 'Reseña no encontrada' });
+    res.json({ message: 'Reseña aprobada' });
+  } catch (err) {
+    const mapped = mapPgErrorToHttp(err);
+    res.status(mapped.status).json({ error: mapped.message });
   }
 }
 
@@ -186,4 +207,5 @@ module.exports = {
   deleteReview,
   filterReviews,
   getRecentReviews,
+  approveReview,
 };
