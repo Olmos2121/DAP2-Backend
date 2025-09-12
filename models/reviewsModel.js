@@ -132,7 +132,7 @@ async function filterReviews(filters, options = {}) {
 
   try {
     const params = [];
-    let idx = 1;
+    let i = 1;
 
     let sql = `
     SELECT
