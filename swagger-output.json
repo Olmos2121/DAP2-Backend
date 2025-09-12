@@ -208,9 +208,6 @@
           },
           "429": {
             "description": "Too Many Requests"
-          },
-          "500": {
-            "description": "Internal Server Error"
           }
         }
       },
@@ -448,22 +445,9 @@
           },
           "404": {
             "description": "Not Found"
-          }
-        }
-      }
-    },
-    "/reviews/recent": {
-      "get": {
-        "description": "",
-        "responses": {
-          "200": {
-            "description": "OK"
           },
           "429": {
             "description": "Too Many Requests"
-          },
-          "500": {
-            "description": "Internal Server Error"
           }
         }
       }
@@ -1051,27 +1035,6 @@
           }
         }
       }
-    },
-    "/reviews/{id}/approve": {
-      "post": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "404": {
-            "description": "Not Found"
-          }
-        }
-      }
     }
   },
   "definitions": {
@@ -1101,6 +1064,30 @@
         "body": {
           "type": "string",
           "example": "Excelente..."
+        },
+        "status": {
+          "type": "string",
+          "example": "pending"
+        },
+        "moderated_at": {
+          "type": "string",
+          "example": "2025-01-01T00:00:00Z"
+        },
+        "moderation_label": {
+          "type": "string",
+          "example": "approved"
+        },
+        "moderation_score": {
+          "type": "number",
+          "example": 0.92
+        },
+        "moderation_reason": {
+          "type": "string",
+          "example": "Lenguaje apropiado; sin insultos."
+        },
+        "moderation_source": {
+          "type": "string",
+          "example": "ai"
         },
         "created_at": {
           "type": "string",

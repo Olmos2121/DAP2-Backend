@@ -1,30 +1,46 @@
-const model = require('../models/reviewsModel');
-const { validateReviewData, validateCommentData, validatePagination, sanitizeInput } = require('../utils/validation');
+// controllers/reviewsController.js
+const pool = require("../db");
+const model = require("../models/reviewsModel");
+const {
+  validateReviewData,
+  validateCommentData,
+  validatePagination,
+  sanitizeInput,
+} = require("../utils/validation");
 
 const VALID_SORTS = {
-  recent:      'r.created_at DESC, r.review_id DESC',
-  rating_asc:  'r.rating ASC, r.created_at DESC',
-  rating_desc: 'r.rating DESC, r.created_at DESC',
+  recent: "r.created_at DESC, r.id DESC",
+  rating_asc: "r.rating ASC, r.created_at DESC",
+  rating_desc: "r.rating DESC, r.created_at DESC",
+  helpful: "likes_count DESC, r.created_at DESC",
 };
 
 function mapPgErrorToHttp(err) {
   switch (err.code) {
-    case '23502': return { status: 400, message: 'Dato requerido ausente (NOT NULL violation).' };
-    case '23503': return { status: 409, message: 'Referencia inválida (FK violation).' };
-    case '23505': return { status: 409, message: 'Valor duplicado (UNIQUE violation).' };
-    case '23514': return { status: 400, message: 'Restricción CHECK violada.' };
-    default:      return { status: 500, message: err.message || 'Error en base de datos.' };
+    case "23502":
+      return {
+        status: 400,
+        message: "Dato requerido ausente (NOT NULL violation).",
+      };
+    case "23503":
+      return { status: 409, message: "Referencia inválida (FK violation)." };
+    case "23505":
+      return { status: 409, message: "Valor duplicado (UNIQUE violation)." };
+    case "23514":
+      return { status: 400, message: "Restricción CHECK violada." };
+    default:
+      return { status: 500, message: err.message || "Error en base de datos." };
   }
 }
 
-function parsePositiveInt(value, defaultValue) {
-  const parsed = parseInt(value, 10);
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : defaultValue;
+function parsePositiveInt(value, def) {
+  const n = Number.parseInt(value, 10);
+  return Number.isFinite(n) && n >= 0 ? n : def;
 }
 
 function parseRating(value) {
   const n = Number.parseInt(value, 10);
-  return Number.isFinite(n) && n >= 0 ? n : null;
+  return Number.isFinite(n) ? n : undefined;
 }
 
 function badRequest(res, message) {
@@ -33,25 +49,20 @@ function badRequest(res, message) {
 
 async function createReview(req, res) {
   try {
-    console.log('🔍 BACKEND - Datos recibidos:', req.body);
-    
-    // Validar datos de entrada
+    // Validaciones básicas (usás tu utils/validation)
     const errors = validateReviewData(req.body);
-    console.log('🔍 BACKEND - Errores de validación:', errors);
-    
-    if (errors.length > 0) {
-      console.log('❌ BACKEND - Validación falló:', errors);
-      return res.status(400).json({ error: 'Datos inválidos', details: errors });
-    }
+    if (errors.length > 0)
+      return res
+        .status(400)
+        .json({ error: "Datos inválidos", details: errors });
 
-    // Sanitizar contenido
-    const sanitizedData = {
+    const sanitized = {
       ...req.body,
       title: sanitizeInput(req.body.title),
       body: sanitizeInput(req.body.body),
     };
 
-    const review = await model.createReview(sanitizedData);
+    const review = await model.createReview(sanitized);
     res.status(201).json(review);
   } catch (err) {
     const mapped = mapPgErrorToHttp(err);
@@ -62,7 +73,7 @@ async function createReview(req, res) {
 async function getReview(req, res) {
   try {
     const review = await model.getReview(req.params.id);
-    if (!review) return res.status(404).json({ error: 'Reseña no encontrada' });
+    if (!review) return res.status(404).json({ error: "Reseña no encontrada" });
     res.json(review);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -72,7 +83,7 @@ async function getReview(req, res) {
 async function updateReview(req, res) {
   try {
     const review = await model.updateReview(req.params.id, req.body);
-    if (!review) return res.status(404).json({ error: 'Reseña no encontrada' });
+    if (!review) return res.status(404).json({ error: "Reseña no encontrada" });
     res.json(review);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -82,8 +93,9 @@ async function updateReview(req, res) {
 async function deleteReview(req, res) {
   try {
     const deleted = await model.deleteReview(req.params.id);
-    if (!deleted) return res.status(404).json({ error: 'Reseña no encontrada' });
-    res.json({ message: 'Reseña eliminada' });
+    if (!deleted)
+      return res.status(404).json({ error: "Reseña no encontrada" });
+    res.json({ message: "Reseña eliminada" });
   } catch (err) {
     const mapped = mapPgErrorToHttp(err);
     res.status(mapped.status).json({ error: mapped.message });
@@ -98,9 +110,9 @@ async function filterReviews(req, res) {
       min_rating,
       max_rating,
       has_spoilers,
-      sort = 'recent',
-      limit = '20',
-      offset = '0',
+      sort = "recent",
+      limit = "20",
+      offset = "0",
     } = req.query;
 
     const orderBy = VALID_SORTS[sort] || VALID_SORTS.recent;
@@ -110,14 +122,19 @@ async function filterReviews(req, res) {
 
     const minR = parseRating(min_rating);
     const maxR = parseRating(max_rating);
-    if (minR !== undefined && (minR < 0 || minR > 5)) return badRequest(res, 'min_rating fuera de rango (0..5)');
-    if (maxR !== undefined && (maxR < 0 || maxR > 5)) return badRequest(res, 'max_rating fuera de rango (0..5)');
-    if (minR !== undefined && maxR !== undefined && minR > maxR) return badRequest(res, 'min_rating no puede ser mayor a max_rating');
+    if (minR !== undefined && (minR < 1 || minR > 5))
+      return badRequest(res, "min_rating fuera de rango (1..5)");
+    if (maxR !== undefined && (maxR < 1 || maxR > 5))
+      return badRequest(res, "max_rating fuera de rango (1..5)");
+    if (minR !== undefined && maxR !== undefined && minR > maxR)
+      return badRequest(res, "min_rating no puede ser mayor a max_rating");
 
     const hs =
-      has_spoilers === 'true' ? true :
-      has_spoilers === 'false' ? false :
-      undefined;
+      has_spoilers === "true"
+        ? true
+        : has_spoilers === "false"
+        ? false
+        : undefined;
 
     const filters = {
       movie_id,
@@ -125,14 +142,23 @@ async function filterReviews(req, res) {
       min_rating: minR,
       max_rating: maxR,
       has_spoilers: hs,
-    }
+    };
 
-    const { rows, total } = await model.filterReviews(filters, { orderBy, limit: pageSize, offset: pageOffset });
+    const { rows, total } = await model.filterReviews(filters, {
+      orderBy,
+      limit: pageSize,
+      offset: pageOffset,
+    });
 
-    res.set('X-Total-Count', String(total ?? 0));
-    res.json({ total: total ?? 0, limit: pageSize, offset: pageOffset, data: rows });
+    res.set("X-Total-Count", String(total ?? 0));
+    res.json({
+      total: total ?? 0,
+      limit: pageSize,
+      offset: pageOffset,
+      data: rows,
+    });
   } catch (err) {
-    console.error('filterReviews error:', err);
+    console.error("filterReviews error:", err);
     res.status(500).json({ error: err.message });
   }
 }
@@ -158,8 +184,8 @@ async function addLike(req, res) {
 async function removeLike(req, res) {
   try {
     const removed = await model.removeLike(req.params.id, req.body.user_id);
-    if (!removed) return res.status(404).json({ error: 'Like no encontrado' });
-    res.json({ message: 'Like eliminado' });
+    if (!removed) return res.status(404).json({ error: "Like no encontrado" });
+    res.json({ message: "Like eliminado" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -176,14 +202,18 @@ async function getComments(req, res) {
 
 async function addComment(req, res) {
   try {
-    // Validar datos de entrada
     const errors = validateCommentData(req.body);
-    if (errors.length > 0) {
-      return res.status(400).json({ error: 'Datos inválidos', details: errors });
-    }
+    if (errors.length > 0)
+      return res
+        .status(400)
+        .json({ error: "Datos inválidos", details: errors });
 
     const sanitizedComment = sanitizeInput(req.body.comment);
-    const comment = await model.addComment(req.params.id, req.body.user_id, sanitizedComment);
+    const comment = await model.addComment(
+      req.params.id,
+      req.body.user_id,
+      sanitizedComment
+    );
     res.status(201).json(comment);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -192,15 +222,17 @@ async function addComment(req, res) {
 
 async function deleteComment(req, res) {
   try {
-    const deleted = await model.deleteComment(req.params.commentId, req.body.user_id);
-    if (!deleted) return res.status(404).json({ error: 'Comentario no encontrado' });
-    res.json({ message: 'Comentario eliminado' });
+    const deleted = await model.deleteComment(
+      req.params.commentId,
+      req.body.user_id
+    );
+    if (!deleted)
+      return res.status(404).json({ error: "Comentario no encontrado" });
+    res.json({ message: "Comentario eliminado" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 }
-
-// 👇 NUEVO: endpoint para estadísticas del dashboard
 
 async function getStats(req, res) {
   try {
@@ -213,11 +245,10 @@ async function getStats(req, res) {
     `);
     res.json(result.rows[0]);
   } catch (err) {
-    console.error('getStats error:', err);
+    console.error("getStats error:", err);
     res.status(500).json({ error: err.message });
   }
 }
-
 
 module.exports = {
   createReview,

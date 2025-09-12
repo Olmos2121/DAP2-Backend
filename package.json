@@ -7,10 +7,11 @@
     "db:create": "dotenv -e .env -- node-pg-migrate create -m migrations",
     "db:migrate": "dotenv -e .env -- node-pg-migrate up -m migrations",
     "db:revert": "dotenv -e .env -- node-pg-migrate down -m migrations",
-    "prestart": "npm run db:migrate && node swagger.cjs",
-    "start": "node index.js",
+    "db:seed": "node scripts/seed.js",
     "predev": "npm run db:migrate && node swagger.cjs",
-    "dev": "node --watch index.js"
+    "dev": "node --watch index.js",
+    "prestart": "npm run db:migrate && node swagger.cjs",
+    "start": "node index.js"
   },
   "repository": {
     "type": "git",

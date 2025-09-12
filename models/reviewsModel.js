@@ -1,34 +1,56 @@
-const pool = require('../db');
-const PK = 'id';
+const pool = require("../db");
+const PK = "id";
 
 const COLS = [
-  'id', 'movie_id', 'user_id', 'rating', 'has_spoilers', 'body',
-  'status', 'edit_count', 'created_at', 'updated_at', 'source'
+  "id",
+  "movie_id",
+  "user_id",
+  "title",
+  "body",
+  "rating",
+  "has_spoilers",
+  "tags",
+  "created_at",
+  "updated_at",
 ];
-const SELECT_COLUMNS = COLS.map(c => `r.${c}`).join(', ');
-const RETURNING_COLUMNS = COLS.join(', ');
+const SELECT_COLUMNS = COLS.map((c) => `r.${c}`).join(", ");
+const RETURNING_COLUMNS = COLS.join(", ");
 
-async function createReview({ movie_id, user_id, rating, has_spoilers, body, title, tags }) {
+async function createReview({
+  movie_id,
+  user_id,
+  rating,
+  has_spoilers,
+  body,
+  title,
+  tags,
+}) {
   try {
     // Validar que la película y usuario existen
-    const movieCheck = await pool.query('SELECT id FROM movies WHERE id = $1', [movie_id]);
+    const movieCheck = await pool.query("SELECT id FROM movies WHERE id = $1", [
+      movie_id,
+    ]);
     if (movieCheck.rows.length === 0) {
-      throw new Error('La película especificada no existe');
+      throw new Error("La película especificada no existe");
     }
 
-    const userCheck = await pool.query('SELECT id FROM users WHERE id = $1', [user_id]);
+    const userCheck = await pool.query("SELECT id FROM users WHERE id = $1", [
+      user_id,
+    ]);
     if (userCheck.rows.length === 0) {
-      throw new Error('El usuario especificado no existe');
+      throw new Error("El usuario especificado no existe");
     }
 
-    const result = await pool.query(
-      `INSERT INTO reviews (movie_id, user_id, rating, has_spoilers, body, title, tags)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [movie_id, user_id, rating, has_spoilers, body, title, tags]
-    );
-    return result.rows[0];
+    const sql = `
+    INSERT INTO reviews (movie_id, user_id, rating, has_spoilers, body, title, tags)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    RETURNING ${RETURNING_COLUMNS}
+    `;
+    const params = [movie_id, user_id, rating, has_spoilers, body, title, tags];
+    const { rows } = await pool.query(sql, params);
+    return rows[0];
   } catch (error) {
-    console.error('Error creating review:', error);
+    console.error("Error creating review:", error);
     throw error;
   }
 }
@@ -43,114 +65,132 @@ async function getReview(id) {
        WHERE r.id = $1`,
       [id]
     );
-    return result.rows[0];
+    const { rows } = await pool.query(sql, [id]);
+    return rows[0] || null;
   } catch (error) {
-    console.error('Error getting review:', error);
+    console.error("Error getting review:", error);
     return null;
   }
 }
 
-async function updateReview(id, { movie_id, user_id, rating, has_spoilers, body, title, tags }) {
+async function updateReview(
+  id,
+  { movie_id, user_id, rating, has_spoilers, body, title, tags }
+) {
   try {
-    const result = await pool.query(
-      `UPDATE reviews 
-       SET movie_id = COALESCE($2, movie_id),
-           user_id = COALESCE($3, user_id),
-           rating = COALESCE($4, rating),
+    const sql = `
+    UPDATE reviews
+       SET movie_id     = COALESCE($2, movie_id),
+           user_id      = COALESCE($3, user_id),
+           rating       = COALESCE($4, rating),
            has_spoilers = COALESCE($5, has_spoilers),
-           body = COALESCE($6, body),
-           title = COALESCE($7, title),
-           tags = COALESCE($8, tags),
-           updated_at = CURRENT_TIMESTAMP
-       WHERE id = $1 RETURNING *`,
-      [id, movie_id, user_id, rating, has_spoilers, body, title, tags]
-    );
-    return result.rows[0];
+           body         = COALESCE($6, body),
+           title        = COALESCE($7, title),
+           tags         = COALESCE($8, tags),
+           updated_at   = CURRENT_TIMESTAMP
+     WHERE id = $1
+    RETURNING ${RETURNING_COLUMNS}
+    `;
+    const params = [
+      id,
+      movie_id,
+      user_id,
+      rating,
+      has_spoilers,
+      body,
+      title,
+      tags,
+    ];
+    const { rows } = await pool.query(sql, params);
+    return rows[0] || null;
   } catch (error) {
-    console.error('Error updating review:', error);
+    console.error("Error updating review:", error);
     throw error;
   }
 }
 
 async function deleteReview(id) {
   try {
-    const result = await pool.query('DELETE FROM reviews WHERE id = $1 RETURNING *', [id]);
+    const result = await pool.query(
+      "DELETE FROM reviews WHERE id = $1 RETURNING *",
+      [id]
+    );
     return result.rowCount > 0;
   } catch (error) {
-    console.error('Error deleting review:', error);
+    console.error("Error deleting review:", error);
     return false;
   }
 }
 
-async function filterReviews(filters, { orderBy, limit, offset }) {
+async function filterReviews(filters, options = {}) {
   const { movie_id, user_id, min_rating, max_rating, has_spoilers } = filters;
-  const { orderBy, limit, offset } = options;
+  const {
+    orderBy: orderClause = "r.created_at DESC, r.id DESC",
+    limit: pageLimit,
+    offset: pageOffset,
+  } = options;
 
   try {
     const params = [];
     let idx = 1;
 
     let sql = `
-      SELECT
-        r.*,
-        u.name as user_name,
-        u.profile_image as user_profile_image,
-        m.title as movie_title,
-        m.poster_url as movie_poster,
-        COALESCE(l.likes_count, 0) as likes_count,
-        COUNT(*) OVER() AS total_count
-      FROM reviews r
-      JOIN users u ON r.user_id = u.id
-      JOIN movies m ON r.movie_id = m.id
-      LEFT JOIN (
-        SELECT review_id, COUNT(*) as likes_count
-        FROM review_likes
-        GROUP BY review_id
-      ) l ON r.id = l.review_id
-      WHERE 1=1
-    `;
+    SELECT
+      ${SELECT_COLUMNS},
+      u.name AS user_name,
+      u.profile_image AS user_profile_image,
+      m.title AS movie_title,
+      m.poster_url AS movie_poster,
+      COALESCE(l.likes_count, 0) AS likes_count,
+      COUNT(*) OVER() AS total_count
+    FROM reviews r
+    JOIN users u  ON r.user_id  = u.id
+    JOIN movies m ON r.movie_id = m.id
+    LEFT JOIN (
+      SELECT review_id, COUNT(*) AS likes_count
+      FROM review_likes
+      GROUP BY review_id
+    ) l ON r.id = l.review_id
+    WHERE 1=1
+  `;
 
     if (movie_id) {
-      sql += ` AND r.movie_id = $${idx++}`;
-      params.push(movie_id);
+      sql += ` AND r.movie_id = $${i++}`;
+      params.push(Number(movie_id));
     }
     if (user_id) {
-      sql += ` AND r.user_id = $${idx++}`;
-      params.push(user_id);
+      sql += ` AND r.user_id  = $${i++}`;
+      params.push(Number(user_id));
     }
     if (min_rating !== undefined) {
-      sql += ` AND r.rating >= $${idx++}`;
-      params.push(min_rating);
+      sql += ` AND r.rating >= $${i++}`;
+      params.push(Number(min_rating));
     }
     if (max_rating !== undefined) {
-      sql += ` AND r.rating <= $${idx++}`;
-      params.push(max_rating);
+      sql += ` AND r.rating <= $${i++}`;
+      params.push(Number(max_rating));
     }
-    if (typeof has_spoilers === 'boolean') {
-      sql += ` AND r.has_spoilers = $${idx++}`;
+    if (typeof has_spoilers === "boolean") {
+      sql += ` AND r.has_spoilers = $${i++}`;
       params.push(has_spoilers);
     }
 
-    sql += ` ORDER BY ${orderBy}`;
+    sql += ` ORDER BY ${orderClause}`;
 
-    if (limit) {
-      sql += ` LIMIT $${idx++} OFFSET $${idx++}`;
-      params.push(limit, offset);
+    if (Number.isFinite(pageLimit) && Number.isFinite(pageOffset)) {
+      sql += ` LIMIT $${i++} OFFSET $${i++}`;
+      params.push(pageLimit, pageOffset);
     }
 
-    const result = await pool.query(sql, params);
-    const rows = result.rows;
+    const { rows } = await pool.query(sql, params);
     const total = rows.length ? Number(rows[0].total_count) : 0;
-
-    rows.forEach(r => delete r.total_count);
-
+    rows.forEach((r) => delete r.total_count);
     return { rows, total };
   } catch (error) {
-    console.error('Error filtering reviews:', error);
+    console.error("Error filtering reviews:", error);
     throw error;
   }
 }
-
 
 // Funciones para manejo de likes
 async function getLikes(review_id) {
@@ -165,7 +205,7 @@ async function getLikes(review_id) {
     );
     return result.rows;
   } catch (error) {
-    console.error('Error getting likes:', error);
+    console.error("Error getting likes:", error);
     return [];
   }
 }
@@ -179,7 +219,7 @@ async function addLike(review_id, user_id) {
     );
     return result.rows[0] || { message: "Ya diste like a esta reseña" };
   } catch (error) {
-    console.error('Error adding like:', error);
+    console.error("Error adding like:", error);
     throw error;
   }
 }
@@ -192,7 +232,7 @@ async function removeLike(review_id, user_id) {
     );
     return result.rowCount > 0;
   } catch (error) {
-    console.error('Error removing like:', error);
+    console.error("Error removing like:", error);
     return false;
   }
 }
@@ -210,7 +250,7 @@ async function getComments(review_id) {
     );
     return result.rows;
   } catch (error) {
-    console.error('Error getting comments:', error);
+    console.error("Error getting comments:", error);
     return [];
   }
 }
@@ -224,7 +264,7 @@ async function addComment(review_id, user_id, comment) {
     );
     return result.rows[0];
   } catch (error) {
-    console.error('Error adding comment:', error);
+    console.error("Error adding comment:", error);
     throw error;
   }
 }
@@ -237,7 +277,7 @@ async function deleteComment(comment_id, user_id) {
     );
     return result.rowCount > 0;
   } catch (error) {
-    console.error('Error deleting comment:', error);
+    console.error("Error deleting comment:", error);
     return false;
   }
 }
