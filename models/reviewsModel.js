@@ -1,4 +1,12 @@
 const pool = require('../db');
+const PK = 'id';
+
+const COLS = [
+  'id', 'movie_id', 'user_id', 'rating', 'has_spoilers', 'body',
+  'status', 'edit_count', 'created_at', 'updated_at', 'source'
+];
+const SELECT_COLUMNS = COLS.map(c => `r.${c}`).join(', ');
+const RETURNING_COLUMNS = COLS.join(', ');
 
 async function createReview({ movie_id, user_id, rating, has_spoilers, body, title, tags }) {
   try {
@@ -74,7 +82,7 @@ async function deleteReview(id) {
   }
 }
 
-async function filterReviews(filters, options) {
+async function filterReviews(filters, { orderBy, limit, offset }) {
   const { movie_id, user_id, min_rating, max_rating, has_spoilers } = filters;
   const { orderBy, limit, offset } = options;
 

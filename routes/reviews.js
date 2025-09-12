@@ -13,6 +13,7 @@ router.get('/', controller.filterReviews);
 router.get('/:id', controller.getReview);
 router.put('/:id', controller.updateReview);
 router.delete('/:id', controller.deleteReview);
+router.post('/:id/approve', controller.approveReview);
 
 // Likes y comentarios
 router.get('/:id/likes', controller.getLikes);

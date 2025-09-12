@@ -2,14 +2,33 @@ const model = require('../models/reviewsModel');
 const { validateReviewData, validateCommentData, validatePagination, sanitizeInput } = require('../utils/validation');
 
 const VALID_SORTS = {
-  recent: 'created_at DESC',
-  rating_asc: 'rating ASC',
-  rating_desc: 'rating DESC',
+  recent:      'r.created_at DESC, r.review_id DESC',
+  rating_asc:  'r.rating ASC, r.created_at DESC',
+  rating_desc: 'r.rating DESC, r.created_at DESC',
+};
+
+function mapPgErrorToHttp(err) {
+  switch (err.code) {
+    case '23502': return { status: 400, message: 'Dato requerido ausente (NOT NULL violation).' };
+    case '23503': return { status: 409, message: 'Referencia inválida (FK violation).' };
+    case '23505': return { status: 409, message: 'Valor duplicado (UNIQUE violation).' };
+    case '23514': return { status: 400, message: 'Restricción CHECK violada.' };
+    default:      return { status: 500, message: err.message || 'Error en base de datos.' };
+  }
 }
 
 function parsePositiveInt(value, defaultValue) {
   const parsed = parseInt(value, 10);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : defaultValue;
+}
+
+function parseRating(value) {
+  const n = Number.parseInt(value, 10);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}
+
+function badRequest(res, message) {
+  return res.status(400).json({ error: message });
 }
 
 async function createReview(req, res) {
@@ -35,7 +54,8 @@ async function createReview(req, res) {
     const review = await model.createReview(sanitizedData);
     res.status(201).json(review);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    const mapped = mapPgErrorToHttp(err);
+    res.status(mapped.status).json({ error: mapped.message });
   }
 }
 
@@ -65,7 +85,8 @@ async function deleteReview(req, res) {
     if (!deleted) return res.status(404).json({ error: 'Reseña no encontrada' });
     res.json({ message: 'Reseña eliminada' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    const mapped = mapPgErrorToHttp(err);
+    res.status(mapped.status).json({ error: mapped.message });
   }
 }
 
@@ -78,7 +99,7 @@ async function filterReviews(req, res) {
       max_rating,
       has_spoilers,
       sort = 'recent',
-      limit = '10',
+      limit = '20',
       offset = '0',
     } = req.query;
 
@@ -87,21 +108,29 @@ async function filterReviews(req, res) {
     const pageSize = Math.min(parsePositiveInt(limit, 20), 100);
     const pageOffset = parsePositiveInt(offset, 0);
 
-    const minR = min_rating !== undefined ? Number(min_rating) : undefined;
-    const maxR = max_rating !== undefined ? Number(max_rating) : undefined;
+    const minR = parseRating(min_rating);
+    const maxR = parseRating(max_rating);
+    if (minR !== undefined && (minR < 0 || minR > 5)) return badRequest(res, 'min_rating fuera de rango (0..5)');
+    if (maxR !== undefined && (maxR < 0 || maxR > 5)) return badRequest(res, 'max_rating fuera de rango (0..5)');
+    if (minR !== undefined && maxR !== undefined && minR > maxR) return badRequest(res, 'min_rating no puede ser mayor a max_rating');
+
+    const hs =
+      has_spoilers === 'true' ? true :
+      has_spoilers === 'false' ? false :
+      undefined;
 
     const filters = {
       movie_id,
       user_id,
-      min_rating: Number.isFinite(minR) ? minR : undefined,
-      max_rating: Number.isFinite(maxR) ? maxR : undefined,
-      has_spoilers: has_spoilers === 'true' ? true : has_spoilers === 'false' ? false : undefined,
+      min_rating: minR,
+      max_rating: maxR,
+      has_spoilers: hs,
     }
 
     const { rows, total } = await model.filterReviews(filters, { orderBy, limit: pageSize, offset: pageOffset });
 
-    res.set('X-Total-Count', String(total));
-    res.json({ total, limit: pageSize, offset: pageOffset, data: rows });
+    res.set('X-Total-Count', String(total ?? 0));
+    res.json({ total: total ?? 0, limit: pageSize, offset: pageOffset, data: rows });
   } catch (err) {
     console.error('filterReviews error:', err);
     res.status(500).json({ error: err.message });
