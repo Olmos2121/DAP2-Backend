@@ -4,14 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "db:create": "dotenv -e .env -- node-pg-migrate create -m migrations",
-    "db:migrate": "dotenv -e .env -- node-pg-migrate up -m migrations",
-    "db:revert": "dotenv -e .env -- node-pg-migrate down -m migrations",
-    "db:seed": "node scripts/seed.js",
-    "predev": "npm run db:migrate && node swagger.cjs",
-    "dev": "node --watch index.js",
-    "prestart": "npm run db:migrate && node swagger.cjs",
-    "start": "node index.js"
+    "dev": "node --watch --require dotenv/config index.js",
+    "prestart": "node swagger.cjs",
+    "start": "node --require dotenv/config index.js"
   },
   "repository": {
     "type": "git",
@@ -31,11 +26,11 @@
     "openai": "^5.20.1",
     "pg": "^8.16.3",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "swagger-autogen": "^2.23.7"
   },
   "devDependencies": {
     "dotenv-cli": "^10.0.0",
-    "node-pg-migrate": "^8.0.3",
-    "swagger-autogen": "^2.23.7"
+    "node-pg-migrate": "^8.0.3"
   }
 }
