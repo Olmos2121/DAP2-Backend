@@ -88,6 +88,11 @@
             "name": "user_id",
             "in": "query",
             "type": "string"
+          },
+          {
+            "name": "genre",
+            "in": "query",
+            "type": "string"
           }
         ],
         "responses": {
@@ -156,6 +161,11 @@
           },
           {
             "name": "user_id",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "genre",
             "in": "query",
             "type": "string"
           }
@@ -243,6 +253,11 @@
             "type": "string"
           },
           {
+            "name": "genre",
+            "in": "query",
+            "type": "string"
+          },
+          {
             "name": "sort",
             "in": "query",
             "type": "string"
@@ -303,6 +318,11 @@
           },
           {
             "name": "has_spoilers",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "genre",
             "in": "query",
             "type": "string"
           },

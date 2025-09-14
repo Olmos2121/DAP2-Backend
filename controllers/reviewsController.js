@@ -110,6 +110,7 @@ async function filterReviews(req, res) {
       min_rating,
       max_rating,
       has_spoilers,
+      genre,
       sort = "recent",
       limit = "20",
       offset = "0",
@@ -142,6 +143,7 @@ async function filterReviews(req, res) {
       min_rating: minR,
       max_rating: maxR,
       has_spoilers: hs,
+      genre,
     };
 
     const { rows, total } = await model.filterReviews(filters, {

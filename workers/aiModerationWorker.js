@@ -1,6 +1,6 @@
 const pool = require('../db');
 const OpenAI = require('openai');
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+//const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 async function callAIForModeration({ body, rating }) {
   const sys = `Eres un moderador. Decide si una reseña debe APROBARSE o RECHAZARSE.

@@ -123,7 +123,7 @@ async function deleteReview(id) {
 }
 
 async function filterReviews(filters, options = {}) {
-  const { movie_id, user_id, min_rating, max_rating, has_spoilers } = filters;
+  const { movie_id, user_id, min_rating, max_rating, has_spoilers, genre } = filters;
   const {
     orderBy: orderClause = "r.created_at DESC, r.id DESC",
     limit: pageLimit,
@@ -141,6 +141,7 @@ async function filterReviews(filters, options = {}) {
       u.profile_image AS user_profile_image,
       m.title AS movie_title,
       m.poster_url AS movie_poster,
+      m.genre AS movie_genre,
       COALESCE(l.likes_count, 0) AS likes_count,
       COUNT(*) OVER() AS total_count
     FROM reviews r
@@ -173,6 +174,10 @@ async function filterReviews(filters, options = {}) {
     if (typeof has_spoilers === "boolean") {
       sql += ` AND r.has_spoilers = $${i++}`;
       params.push(has_spoilers);
+    }
+    if (genre) {
+      sql += ` AND m.genre ILIKE $${i++}`;
+      params.push(`%${genre}%`);
     }
 
     sql += ` ORDER BY ${orderClause}`;

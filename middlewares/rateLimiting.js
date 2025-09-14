@@ -1,7 +1,7 @@
 // Rate limiting simple en memoria (para producción usar Redis)
-const requestCounts = new Map();
+const requestCounts = new Map(); // Cache limpiado
 const WINDOW_SIZE = 15 * 60 * 1000; // 15 minutos
-const MAX_REQUESTS = 100; // máximo 100 requests por ventana
+const MAX_REQUESTS = 1000; // máximo 1000 requests por ventana (aumentado para pruebas)
 
 function rateLimiter(req, res, next) {
   const clientIP = req.ip || req.connection.remoteAddress;

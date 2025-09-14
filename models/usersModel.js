@@ -82,20 +82,34 @@ async function deleteUser(id) {
 
 async function getUserStats(id) {
   try {
-    const result = await pool.query(
+    // Primero obtenemos los datos básicos del usuario
+    const userQuery = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+    if (userQuery.rows.length === 0) {
+      return null;
+    }
+    
+    const user = userQuery.rows[0];
+    
+    // Luego calculamos las estadísticas
+    const statsQuery = await pool.query(
       `SELECT 
-        u.*,
-        COUNT(r.id) as total_reviews,
-        COALESCE(AVG(r.rating), 0) as avg_rating,
-        COUNT(rl.id) as total_likes_received
-       FROM users u
-       LEFT JOIN reviews r ON u.id = r.user_id
+        COUNT(DISTINCT r.id) as total_reviews,
+        COALESCE(ROUND(AVG(r.rating), 1), 0) as avg_rating,
+        COALESCE(SUM(CASE WHEN rl.id IS NOT NULL THEN 1 ELSE 0 END), 0) as total_likes_received
+       FROM reviews r
        LEFT JOIN review_likes rl ON r.id = rl.review_id
-       WHERE u.id = $1
-       GROUP BY u.id`,
+       WHERE r.user_id = $1`,
       [id]
     );
-    return result.rows[0];
+    
+    const stats = statsQuery.rows[0];
+    
+    return {
+      ...user,
+      total_reviews: parseInt(stats.total_reviews),
+      avg_rating: parseFloat(stats.avg_rating),
+      total_likes_received: parseInt(stats.total_likes_received)
+    };
   } catch (error) {
     console.error('Error getting user stats:', error);
     return null;

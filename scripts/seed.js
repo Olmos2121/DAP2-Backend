@@ -23,16 +23,40 @@ function buildPgConfig() {
 
 (async () => {
   const pool = new Pool(buildPgConfig());
-  const sqlPath = path.join(__dirname, 'seed.sql');
+  const sqlPath = path.join(__dirname, 'seed-simple.sql');
   const sql = fs.readFileSync(sqlPath, 'utf8');
   const client = await pool.connect();
 
   try {
-    console.log('💾 Ejecutando scripts/seed.sql ...');
-    // IMPORTANTE: no hagas BEGIN/COMMIT aquí si el archivo ya los trae.
+    console.log('💾 Ejecutando scripts/seed-simple.sql ...');
+    
+    // Ejecutar el script completo como una transacción
+    await client.query('BEGIN');
     await client.query(sql);
-    console.log('✅ Seed completado');
+    await client.query('COMMIT');
+    
+    console.log('✅ Seed completado exitosamente');
+    
+    // Verificar los datos
+    const result = await client.query(`
+      SELECT 'users' AS tabla, COUNT(*) AS registros FROM users
+      UNION ALL
+      SELECT 'movies' AS tabla, COUNT(*) AS registros FROM movies
+      UNION ALL
+      SELECT 'reviews' AS tabla, COUNT(*) AS registros FROM reviews
+      UNION ALL
+      SELECT 'review_likes' AS tabla, COUNT(*) AS registros FROM review_likes
+      UNION ALL
+      SELECT 'review_comments' AS tabla, COUNT(*) AS registros FROM review_comments
+    `);
+    
+    console.log('\n📊 Estado de la base de datos:');
+    result.rows.forEach(row => {
+      console.log(`   ${row.tabla}: ${row.registros} registros`);
+    });
+    
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error('❌ Error al sembrar:', err.message);
     process.exitCode = 1;
   } finally {
