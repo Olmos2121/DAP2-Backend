@@ -1,12 +1,9 @@
-# Nombre del pipeline
 name: Deploy Backend to AWS EC2
 
-# Disparador: Se ejecuta cada vez que hay un push a la rama 'main'
 on:
   push:
     branches: [ "main" ]
 
-# Variables de entorno para todo el pipeline
 env:
   ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
   IMAGE_TAG: latest
@@ -14,7 +11,7 @@ env:
 jobs:
   build-and-deploy:
     name: Build and Deploy
-    runs-on: ubuntu-latest # Usamos una máquina virtual de Linux para ejecutar los pasos
+    runs-on: ubuntu-latest
 
     steps:
     # 1. Clona el código del repositorio
