@@ -47,21 +47,31 @@ jobs:
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_PRIVATE_KEY }}
         script: |
-          # Escribir el contenido del secreto DOT_ENV en un archivo .env en el servidor
+          # Defino el nombre completo de la imagen en una variable para reusarla
+          IMAGE_NAME="${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ secrets.IMAGE_TAG }}"
+          
+          # Escribo el contenido del secreto DOT_ENV en un archivo .env en el servidor
           echo "${{ secrets.DOT_ENV }}" > ~/backend/backend.env
           
-          # Navegar a la carpeta de la aplicación
+          # Navego a la carpeta de la aplicación donde está el .env
           cd ~/backend
           
-          # Traer la última imagen de ECR
-          docker pull ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ secrets.IMAGE_TAG }}
+          # Traigo la última imagen de ECR
+          docker pull $IMAGE_NAME
           
-          # Detener y eliminar el contenedor actual si existe
-          docker stop $(docker ps -q --filter ancestor=${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ secrets.IMAGE_TAG }}) || true
-          docker rm $(docker ps -a -q --filter ancestor=${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ secrets.IMAGE_TAG }}) || true
+          # Busco TODOS los contenedores (activos y detenidos) de la imagen vieja
+          OLD_CONTAINERS=$(docker ps -a -q --filter ancestor=$IMAGE_NAME)
+          
+          # Si la variable OLD_CONTAINERS no está vacía, detengo y elimino los contenedores
+          if [ -n "$OLD_CONTAINERS" ]; then
+            echo "Deteniendo y eliminando contenedores viejos..."
+            docker stop $OLD_CONTAINERS
+            docker rm $OLD_CONTAINERS
+          fi
           
           # Ejecutar el nuevo contenedor
+          echo "Ejecutando nuevo contenedor..."
           docker run -d -p 8080:8080 \
             --restart always \
-            --env-file /home/ec2-user/backend/backend.env \
-            ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ secrets.IMAGE_TAG }}
+            --env-file ./backend.env \
+            $IMAGE_NAME
