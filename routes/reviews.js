@@ -9,7 +9,6 @@ router.get('/filter', controller.filterReviews);
 //router.get('/recent', controller.getRecentReviews);
 router.get('/stats', controller.getStats);
 
-router.get('/', controller.filterReviews);
 router.get('/:id', controller.getReview);
 router.put('/:id', controller.updateReview);
 router.delete('/:id', controller.deleteReview);

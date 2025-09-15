@@ -57,15 +57,14 @@ async function createReview({
 
 async function getReview(id) {
   try {
-    const result = await pool.query(
-      `SELECT r.*, u.name as user_name, m.title as movie_title
+    const { rows } = await pool.query(
+      `SELECT r.*, u.name AS user_name, m.title AS movie_title
        FROM reviews r
        JOIN users u ON r.user_id = u.id
        JOIN movies m ON r.movie_id = m.id
        WHERE r.id = $1`,
       [id]
     );
-    const { rows } = await pool.query(sql, [id]);
     return rows[0] || null;
   } catch (error) {
     console.error("Error getting review:", error);
