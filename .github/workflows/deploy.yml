@@ -1,0 +1,70 @@
+# Nombre del pipeline
+name: Deploy Backend to AWS EC2
+
+# Disparador: Se ejecuta cada vez que hay un push a la rama 'main'
+on:
+  push:
+    branches: [ "main" ]
+
+# Variables de entorno para todo el pipeline
+env:
+  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+  IMAGE_TAG: latest
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest # Usamos una máquina virtual de Linux para ejecutar los pasos
+
+    steps:
+    # 1. Clona el código del repositorio
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # 2. Configura las credenciales de AWS
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    # 3. Inicia sesión en Amazon ECR
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    # 4. Construye, etiqueta y sube la imagen de Docker a ECR
+    - name: Build, tag, and push image to Amazon ECR
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+    # 5. Despliega la nueva imagen en el servidor EC2
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_PRIVATE_KEY }}
+        script: |
+          # Escribir el contenido del secreto DOT_ENV en un archivo .env en el servidor
+          echo "${{ secrets.DOT_ENV }}" > ~/backend/backend.env
+          
+          # Navegar a la carpeta de la aplicación
+          cd ~/backend
+          
+          # Traer la última imagen de ECR
+          docker pull ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ secrets.IMAGE_TAG }}
+          
+          # Detener y eliminar el contenedor actual si existe
+          docker stop $(docker ps -q --filter ancestor=${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ secrets.IMAGE_TAG }}) || true
+          docker rm $(docker ps -a -q --filter ancestor=${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ secrets.IMAGE_TAG }}) || true
+          
+          # Ejecutar el nuevo contenedor
+          docker run -d -p 8080:8080 \
+            --restart always \
+            --env-file ./backend.env \
+            ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ secrets.IMAGE_TAG }}
