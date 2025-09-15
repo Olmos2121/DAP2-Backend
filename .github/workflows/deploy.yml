@@ -1,9 +1,12 @@
+# Nombre del pipeline
 name: Deploy Backend to AWS EC2
 
+# Disparador: Se ejecuta cada vez que hay un push a la rama 'main'
 on:
   push:
     branches: [ "main" ]
 
+# Variables de entorno para todo el pipeline
 env:
   ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
   IMAGE_TAG: latest
@@ -48,34 +51,27 @@ jobs:
         key: ${{ secrets.EC2_PRIVATE_KEY }}
         script: |
           # Defino el nombre completo de la imagen en una variable para reusarla
-          IMAGE_NAME="${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ secrets.IMAGE_TAG }}"
-
-          # --- PASO DE DEPURACION ---
-          # Imprimo el valor de la variable para ver qué está recibiendo el script
-          echo "DEBUG: El nombre de la imagen construido es -> $IMAGE_NAME"
-          # --------------------------
+          IMAGE_NAME="${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}"
           
           # Escribo el contenido del secreto DOT_ENV en un archivo .env en el servidor
           echo "${{ secrets.DOT_ENV }}" > ~/backend/backend.env
           
-          # Navego a la carpeta de la aplicación donde está el .env
+          # Navego a la carpeta de la aplicación
           cd ~/backend
           
           # Traigo la última imagen de ECR
           docker pull $IMAGE_NAME
           
-          # Busco TODOS los contenedores (activos y detenidos) de la imagen vieja
+          # Busco contenedores viejos
           OLD_CONTAINERS=$(docker ps -a -q --filter ancestor=$IMAGE_NAME)
           
-          # Si la variable OLD_CONTAINERS no está vacía, detengo y elimino los contenedores
+          # Si encuentro contenedores, los detengo y elimino
           if [ -n "$OLD_CONTAINERS" ]; then
-            echo "Deteniendo y eliminando contenedores viejos..."
             docker stop $OLD_CONTAINERS
             docker rm $OLD_CONTAINERS
           fi
           
-          # Ejecutar el nuevo contenedor
-          echo "Ejecutando nuevo contenedor..."
+          # Ejecuto el nuevo contenedor
           docker run -d -p 8080:8080 \
             --restart always \
             --env-file ./backend.env \
