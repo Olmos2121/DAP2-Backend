@@ -4,10 +4,6 @@
 ## Card Trello
 - Card: [URL de la tarjeta]
 
-## Cambios principales
-- Punto 1
-- Punto 2
-
 ## Cómo probar / pasos
 1. Paso para reproducir
 2. Tests a correr
