@@ -93,6 +93,16 @@
             "name": "genre",
             "in": "query",
             "type": "string"
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "date_range",
+            "in": "query",
+            "type": "string"
           }
         ],
         "responses": {
@@ -125,21 +135,6 @@
             "type": "string"
           },
           {
-            "name": "min_rating",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "max_rating",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "has_spoilers",
-            "in": "query",
-            "type": "string"
-          },
-          {
             "name": "sort",
             "in": "query",
             "type": "string"
@@ -155,17 +150,7 @@
             "type": "string"
           },
           {
-            "name": "movie_id",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "user_id",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "genre",
+            "name": "otherFilters",
             "in": "query",
             "type": "string"
           }
@@ -220,73 +205,6 @@
             "description": "Too Many Requests"
           }
         }
-      },
-      "get": {
-        "description": "",
-        "produces": [
-          "nosniff"
-        ],
-        "parameters": [
-          {
-            "name": "movie_id",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "user_id",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "min_rating",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "max_rating",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "has_spoilers",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "genre",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "429": {
-            "description": "Too Many Requests"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
       }
     },
     "/reviews/filter": {
@@ -323,6 +241,16 @@
           },
           {
             "name": "genre",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "date_range",
             "in": "query",
             "type": "string"
           },

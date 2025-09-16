@@ -111,6 +111,8 @@ async function filterReviews(req, res) {
       max_rating,
       has_spoilers,
       genre,
+      tags,
+      date_range,
       sort = "recent",
       limit = "20",
       offset = "0",
@@ -137,6 +139,20 @@ async function filterReviews(req, res) {
         ? false
         : undefined;
 
+    // Procesar tags si vienen como string
+    let tagsArray = [];
+    if (tags) {
+      if (Array.isArray(tags)) {
+        tagsArray = tags;
+      } else if (typeof tags === 'string') {
+        try {
+          tagsArray = JSON.parse(tags);
+        } catch {
+          tagsArray = [tags];
+        }
+      }
+    }
+
     const filters = {
       movie_id,
       user_id,
@@ -144,6 +160,8 @@ async function filterReviews(req, res) {
       max_rating: maxR,
       has_spoilers: hs,
       genre,
+      tags: tagsArray.length > 0 ? tagsArray : undefined,
+      date_range,
     };
 
     const { rows, total } = await model.filterReviews(filters, {
