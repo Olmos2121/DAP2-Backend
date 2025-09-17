@@ -62,10 +62,17 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-// Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  /*
+    #swagger.tags = ['Health']
+    #swagger.summary = 'Healthcheck'
+    #swagger.description = 'Liveness del servicio'
+    #swagger.produces = ['application/json']
+    #swagger.responses[200] = { description: 'OK' }
+  */
+  res.set('Cache-Control', 'no-store');
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development'
   });
@@ -99,69 +106,6 @@ app.use("/movies", (req, res, next) => {
     return createContentLimiter(req, res, next);
   }
   next();
-});
-
-// Rutas específicas para HU-005 y HU-006
-app.get("/movies/:id/reviews", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { 
-      min_rating,
-      max_rating,
-      has_spoilers,
-      sort = 'recent',
-      limit = '10',
-      offset = '0'
-    } = req.query;
-
-    const reviewsController = require('./controllers/reviewsController');
-    
-    // Usar el filtro existente con movie_id
-    req.query = {
-      movie_id: id,
-      min_rating,
-      max_rating,
-      has_spoilers,
-      sort,
-      limit,
-      offset
-    };
-    
-    await reviewsController.filterReviews(req, res);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get("/users/:id/reviews", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { 
-      min_rating,
-      max_rating,
-      has_spoilers,
-      sort = 'recent',
-      limit = '10',
-      offset = '0'
-    } = req.query;
-
-    const reviewsController = require('./controllers/reviewsController');
-    
-    // Usar el filtro existente con user_id
-    req.query = {
-      user_id: id,
-      min_rating,
-      max_rating,
-      has_spoilers,
-      sort,
-      limit,
-      offset
-    };
-    
-    await reviewsController.filterReviews(req, res);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
 });
 
 // Manejo de errores global

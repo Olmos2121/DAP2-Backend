@@ -1,25 +1,38 @@
-# Usa una imagen base oficial de Node.js.
-# https://hub.docker.com/_/node
-FROM node:20-slim AS base
+# --- Etapa 1 de Dockerfile: "Builder" ---
+# En esta etapa instalamos TODO, incluyendo las devDependencies
+FROM node:20-slim AS builder
 
-# Establece el directorio de trabajo en /app
 WORKDIR /app
 
-# Copia los archivos de definición de dependencias
+# Copiamos los archivos de dependencias
 COPY package.json package-lock.json ./
 
-# Instala solo las dependencias de producción
-RUN npm install --production
+# Instalamos TODAS las dependencias (de desarrollo y producción)
+RUN npm install
 
-# Copia el resto de los archivos de la aplicación
+# Copiamos el resto del código
 COPY . .
 
-# Genera el archivo swagger.cjs necesario para el arranque
+# Ejecutamos el script que necesita las devDependencies
 RUN node swagger.cjs
 
-# Expone el puerto en el que la aplicación se ejecuta
-# AWS App Runner espera el puerto 8080 por defecto
+# --- Etapa 2 de Dockerfile: "Production" ---
+# Empezamos desde una imagen limpia para la versión final
+FROM node:20-slim AS production
+
+WORKDIR /app
+
+# Copiamos las dependencias de producción desde la etapa 'builder'
+COPY --from=builder /app/node_modules ./node_modules
+
+# Copiamos el package.json
+COPY --from=builder /app/package.json ./
+
+# Copiamos el código fuente de la aplicación
+COPY --from=builder /app .
+
+# Exponemos el puerto de la aplicación
 EXPOSE 8080
 
-# El comando para iniciar la aplicación en producción
+# El comando para iniciar la aplicación
 CMD ["npm", "start"]
