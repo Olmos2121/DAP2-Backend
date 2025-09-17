@@ -12,8 +12,8 @@ const doc = {
   basePath: '/',
   tags: [
     { name: 'Reviews', description: 'Operaciones sobre reseñas' },
-    { name: 'Likes', description: 'Likes de reseñas' },
-    { name: 'Comments', description: 'Comentarios de reseñas' },
+    // { name: 'Likes', description: 'Likes de reseñas' },
+    // { name: 'Comments', description: 'Comentarios de reseñas' },
     { name: 'Users', description: 'Gestión de usuarios' },
     { name: 'Movies', description: 'Gestión de películas' },
     { name: 'Health', description: 'Salud del servicio' },

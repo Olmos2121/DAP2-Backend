@@ -13,7 +13,10 @@
     "test:coverage": "jest --coverage"
   },
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": [
+      "<rootDir>/tests/setupTests.js"
+    ]
   },
   "repository": {
     "type": "git",
