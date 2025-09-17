@@ -45,70 +45,7 @@
         "summary": "Healthcheck",
         "description": "Liveness del servicio",
         "produces": [
-          "nosniff"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "min_rating",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "max_rating",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "has_spoilers",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "movie_id",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "user_id",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "genre",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "tags",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "date_range",
-            "in": "query",
-            "type": "string"
-          }
+          "application/json"
         ],
         "responses": {
           "200": {
@@ -119,59 +56,6 @@
           },
           "429": {
             "description": "Too Many Requests"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/users/{id}/reviews": {
-      "get": {
-        "description": "",
-        "produces": [
-          "nosniff"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "otherFilters",
-            "in": "query",
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "429": {
-            "description": "Too Many Requests"
-          },
-          "500": {
-            "description": "Internal Server Error"
           }
         }
       }
@@ -201,7 +85,10 @@
         ],
         "responses": {
           "201": {
-            "description": "Created"
+            "description": "Creada",
+            "schema": {
+              "$ref": "#/definitions/Review"
+            }
           },
           "400": {
             "description": "Bad Request"
@@ -214,41 +101,15 @@
     },
     "/reviews/filter": {
       "get": {
-        "description": "",
+        "tags": [
+          "Reviews"
+        ],
+        "summary": "Filtrar reseñas",
+        "description": "Filtra reseñas por distintos criterios.",
         "produces": [
-          "nosniff"
+          "application/json"
         ],
         "parameters": [
-          {
-            "name": "movie_id",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "user_id",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "min_rating",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "max_rating",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "has_spoilers",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "genre",
-            "in": "query",
-            "type": "string"
-          },
           {
             "name": "tags",
             "in": "query",
@@ -256,6 +117,38 @@
           },
           {
             "name": "date_range",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "movie_id",
+            "in": "query",
+            "type": "integer",
+            "description": "ID de película"
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "type": "integer",
+            "description": "ID de usuario"
+          },
+          {
+            "name": "min_rating",
+            "in": "query",
+            "type": "number"
+          },
+          {
+            "name": "max_rating",
+            "in": "query",
+            "type": "number"
+          },
+          {
+            "name": "has_spoilers",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "genre",
             "in": "query",
             "type": "string"
           },
@@ -857,6 +750,78 @@
             "description": "OK",
             "schema": {
               "$ref": "#/definitions/User"
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "No encontrado"
+          },
+          "429": {
+            "description": "Too Many Requests"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/users/{id}/reviews": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Obtener reseñas de un usuario por ID",
+        "description": "Devuelve todas las reseñas de un usuario específico.",
+        "produces": [
+          "nosniff"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "otherFilters",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "array"
+                },
+                "items": {
+                  "$ref": "#/definitions/Review"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
             }
           },
           "400": {

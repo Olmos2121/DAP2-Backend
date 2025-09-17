@@ -33,7 +33,16 @@ router.get('/search',
     controller.getUserByEmail
 );
 
-router.get('/:id/reviews', controller.getUserReviews); // ✅ Nueva ruta para reseñas del usuario
+router.get('/:id/reviews', 
+    /*
+      #swagger.tags = ['Users']
+      #swagger.summary = 'Obtener reseñas de un usuario por ID'
+      #swagger.description = 'Devuelve todas las reseñas de un usuario específico.'
+      #swagger.parameters['id'] = { in: 'path', required: true, type: 'integer' }
+      #swagger.responses[200] = { description: 'OK', schema: { type: 'array', items: { $ref: '#/definitions/Review' } } }
+      #swagger.responses[404] = { description: 'No encontrado' }
+    */
+  controller.getUserReviews);
 
 router.get('/:id', 
     /*
