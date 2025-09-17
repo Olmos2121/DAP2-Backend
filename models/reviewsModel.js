@@ -122,7 +122,7 @@ async function deleteReview(id) {
 }
 
 async function filterReviews(filters, options = {}) {
-  const { movie_id, user_id, min_rating, max_rating, has_spoilers, genre } = filters;
+  const { movie_id, user_id, min_rating, max_rating, has_spoilers, genre, tags, date_range } = filters;
   const {
     orderBy: orderClause = "r.created_at DESC, r.id DESC",
     limit: pageLimit,
@@ -177,6 +177,47 @@ async function filterReviews(filters, options = {}) {
     if (genre) {
       sql += ` AND m.genre ILIKE $${i++}`;
       params.push(`%${genre}%`);
+    }
+
+    // Filtro por tags
+    if (tags && Array.isArray(tags) && tags.length > 0) {
+      sql += ` AND (`;
+      const tagConditions = [];
+      for (const tag of tags) {
+        tagConditions.push(`r.tags @> $${i++}`);
+        params.push(JSON.stringify([tag]));
+      }
+      sql += tagConditions.join(' OR ');
+      sql += `)`;
+    }
+
+    // Filtro por fecha
+    if (date_range) {
+      const now = new Date();
+      let startDate;
+      
+      switch (date_range) {
+        case 'hoy':
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          break;
+        case 'esta-semana':
+          startDate = new Date(now);
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case 'este-mes':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        case 'este-año':
+          startDate = new Date(now.getFullYear(), 0, 1);
+          break;
+        default:
+          startDate = null;
+      }
+      
+      if (startDate) {
+        sql += ` AND r.created_at >= $${i++}`;
+        params.push(startDate.toISOString());
+      }
     }
 
     sql += ` ORDER BY ${orderClause}`;

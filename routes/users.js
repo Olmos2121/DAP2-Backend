@@ -33,6 +33,8 @@ router.get('/search',
     controller.getUserByEmail
 );
 
+router.get('/:id/reviews', controller.getUserReviews); // ✅ Nueva ruta para reseñas del usuario
+
 router.get('/:id', 
     /*
       #swagger.tags = ['Users']

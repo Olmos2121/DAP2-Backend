@@ -45,11 +45,133 @@
         "summary": "Healthcheck",
         "description": "Liveness del servicio",
         "produces": [
-          "application/json"
+          "nosniff"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "min_rating",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "max_rating",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "has_spoilers",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "movie_id",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "genre",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "date_range",
+            "in": "query",
+            "type": "string"
+          }
         ],
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "429": {
+            "description": "Too Many Requests"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/users/{id}/reviews": {
+      "get": {
+        "description": "",
+        "produces": [
+          "nosniff"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "otherFilters",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "429": {
+            "description": "Too Many Requests"
+          },
+          "500": {
+            "description": "Internal Server Error"
           }
         }
       }
@@ -79,10 +201,7 @@
         ],
         "responses": {
           "201": {
-            "description": "Creada",
-            "schema": {
-              "$ref": "#/definitions/Review"
-            }
+            "description": "Created"
           },
           "400": {
             "description": "Bad Request"
@@ -95,44 +214,48 @@
     },
     "/reviews/filter": {
       "get": {
-        "tags": [
-          "Reviews"
-        ],
-        "summary": "Filtrar reseñas",
-        "description": "Filtra reseñas por distintos criterios.",
+        "description": "",
         "produces": [
-          "application/json"
+          "nosniff"
         ],
         "parameters": [
           {
             "name": "movie_id",
             "in": "query",
-            "type": "integer",
-            "description": "ID de película"
+            "type": "string"
           },
           {
             "name": "user_id",
             "in": "query",
-            "type": "integer",
-            "description": "ID de usuario"
+            "type": "string"
           },
           {
             "name": "min_rating",
             "in": "query",
-            "type": "number"
+            "type": "string"
           },
           {
             "name": "max_rating",
             "in": "query",
-            "type": "number"
+            "type": "string"
           },
           {
             "name": "has_spoilers",
             "in": "query",
-            "type": "boolean"
+            "type": "string"
           },
           {
             "name": "genre",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "date_range",
             "in": "query",
             "type": "string"
           },
