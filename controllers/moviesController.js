@@ -1,13 +1,13 @@
 const model = require('../models/moviesModel');
 
-async function createMovie(req, res) {
+/* async function createMovie(req, res) {
   try {
     const movie = await model.createMovie(req.body);
     res.status(201).json(movie);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
-}
+} */
 
 async function getMovie(req, res) {
   try {
@@ -52,7 +52,7 @@ async function getMoviesByGenre(req, res) {
   }
 }
 
-async function updateMovie(req, res) {
+/* async function updateMovie(req, res) {
   try {
     const movie = await model.updateMovie(req.params.id, req.body);
     if (!movie) return res.status(404).json({ error: 'Película no encontrada' });
@@ -60,9 +60,9 @@ async function updateMovie(req, res) {
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
-}
+} */
 
-async function deleteMovie(req, res) {
+/* async function deleteMovie(req, res) {
   try {
     const deleted = await model.deleteMovie(req.params.id);
     if (!deleted) return res.status(404).json({ error: 'Película no encontrada' });
@@ -70,14 +70,14 @@ async function deleteMovie(req, res) {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-}
+} */
 
 module.exports = {
-  createMovie,
+  // createMovie,
   getMovie,
   getAllMovies,
   searchMovies,
   getMoviesByGenre,
-  updateMovie,
-  deleteMovie,
+  // updateMovie,
+  // deleteMovie,
 };
