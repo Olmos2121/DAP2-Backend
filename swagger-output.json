@@ -339,84 +339,6 @@
         }
       }
     },
-    "/users/": {
-      "post": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Crear usuario",
-        "description": "Crea un nuevo usuario.",
-        "consumes": [
-          "application/json"
-        ],
-        "produces": [
-          "application/json"
-        ],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UserCreateInput"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Creado",
-            "schema": {
-              "$ref": "#/definitions/User"
-            }
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "429": {
-            "description": "Too Many Requests"
-          }
-        }
-      },
-      "get": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Obtener todos los usuarios",
-        "description": "",
-        "produces": [
-          "nosniff"
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "example": "array"
-                },
-                "items": {
-                  "$ref": "#/definitions/User"
-                }
-              },
-              "xml": {
-                "name": "main"
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "429": {
-            "description": "Too Many Requests"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
     "/users/search": {
       "get": {
         "tags": [
@@ -529,117 +451,37 @@
         }
       }
     },
-    "/users/{id}": {
+    "/users/": {
       "get": {
         "tags": [
           "Users"
         ],
-        "summary": "Obtener usuario por ID",
+        "summary": "Obtener todos los usuarios",
         "description": "",
         "produces": [
           "nosniff"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "integer"
-          }
         ],
         "responses": {
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/User"
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "array"
+                },
+                "items": {
+                  "$ref": "#/definitions/User"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
             }
           },
           "400": {
             "description": "Bad Request"
-          },
-          "404": {
-            "description": "No encontrado"
-          },
-          "429": {
-            "description": "Too Many Requests"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Actualizar usuario por ID",
-        "description": "",
-        "produces": [
-          "nosniff"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "integer"
-          },
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/UserUpdateInput"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/User"
-            }
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "404": {
-            "description": "No encontrado"
-          },
-          "429": {
-            "description": "Too Many Requests"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Eliminar usuario por ID",
-        "description": "",
-        "produces": [
-          "nosniff"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "integer"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          },
-          "204": {
-            "description": "Sin Contenido"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "404": {
-            "description": "No encontrado"
           },
           "429": {
             "description": "Too Many Requests"

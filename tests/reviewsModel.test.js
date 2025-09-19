@@ -260,6 +260,41 @@ describe('reviewsModel', () => {
       pool.query.mockRejectedValueOnce(new Error('fail'));
       await expect(filterReviews({}, {})).rejects.toThrow('fail');
     });
+
+    // camino feliz - sin filtros (todos undefined)
+    it('funciona sin filtros (todos undefined)', async () => {
+      pool.query.mockResolvedValueOnce({ rows: [] });
+      await filterReviews({}, {});
+      const [sql, params] = pool.query.mock.calls[0];
+      expect(sql).toMatch(/WHERE 1=1/i);
+      expect(params).toEqual([]);
+    });
+
+    // camino triste - no hay filas
+    it('devuelve [] y total 0 si no hay filas', async () => {
+      pool.query.mockResolvedValueOnce({ rows: [] });
+      const out = await filterReviews({ movie_id: 1 }, {});
+      expect(out).toEqual({ rows: [], total: 0 });
+    });
+
+    // camino triste - limit/offset no son números
+    it('funciona si limit/offset no son números (no aplica paginación)', async () => {
+      pool.query.mockResolvedValueOnce({ rows: [] });
+      await filterReviews({}, { limit: 'x', offset: null });
+      const [sql, params] = pool.query.mock.calls[0];
+      expect(sql).not.toMatch(/LIMIT/i);
+      expect(sql).not.toMatch(/OFFSET/i);
+      expect(params).toEqual([]);
+    });
+
+    // camino triste - fecha inválida en date_range
+    it('ignora date_range si es inválido', async () => {
+      pool.query.mockResolvedValueOnce({ rows: [] });
+      await filterReviews({ date_range: 'invalid-date' }, {});
+      const [sql, params] = pool.query.mock.calls[0];
+      expect(sql).not.toMatch(/r\.created_at >=/i);
+      expect(params).toEqual([]);
+    });
   });
 
 
