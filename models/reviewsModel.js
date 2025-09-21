@@ -122,7 +122,7 @@ async function deleteReview(id) {
 }
 
 async function filterReviews(filters, options = {}) {
-  const { movie_id, user_id, min_rating, max_rating, has_spoilers, genre } = filters;
+  const { movie_id, user_id, min_rating, max_rating, has_spoilers, genre, tags, date_range } = filters;
   const {
     orderBy: orderClause = "r.created_at DESC, r.id DESC",
     limit: pageLimit,
@@ -179,6 +179,47 @@ async function filterReviews(filters, options = {}) {
       params.push(`%${genre}%`);
     }
 
+    // Filtro por tags
+    if (tags && Array.isArray(tags) && tags.length > 0) {
+      sql += ` AND (`;
+      const tagConditions = [];
+      for (const tag of tags) {
+        tagConditions.push(`r.tags @> $${i++}`);
+        params.push(JSON.stringify([tag]));
+      }
+      sql += tagConditions.join(' OR ');
+      sql += `)`;
+    }
+
+    // Filtro por fecha
+    if (date_range) {
+      const now = new Date();
+      let startDate;
+      
+      switch (date_range) {
+        case 'hoy':
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          break;
+        case 'esta-semana':
+          startDate = new Date(now);
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case 'este-mes':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        case 'este-año':
+          startDate = new Date(now.getFullYear(), 0, 1);
+          break;
+        default:
+          startDate = null;
+      }
+      
+      if (startDate) {
+        sql += ` AND r.created_at >= $${i++}`;
+        params.push(startDate.toISOString());
+      }
+    }
+
     sql += ` ORDER BY ${orderClause}`;
 
     if (Number.isFinite(pageLimit) && Number.isFinite(pageOffset)) {
@@ -197,94 +238,94 @@ async function filterReviews(filters, options = {}) {
 }
 
 // Funciones para manejo de likes
-async function getLikes(review_id) {
-  try {
-    const result = await pool.query(
-      `SELECT u.id, u.name, u.profile_image
-       FROM review_likes rl
-       JOIN users u ON rl.user_id = u.id
-       WHERE rl.review_id = $1
-       ORDER BY rl.created_at DESC`,
-      [review_id]
-    );
-    return result.rows;
-  } catch (error) {
-    console.error("Error getting likes:", error);
-    return [];
-  }
-}
+// async function getLikes(review_id) {
+//   try {
+//     const result = await pool.query(
+//       `SELECT u.id, u.name, u.profile_image
+//        FROM review_likes rl
+//        JOIN users u ON rl.user_id = u.id
+//        WHERE rl.review_id = $1
+//        ORDER BY rl.created_at DESC`,
+//       [review_id]
+//     );
+//     return result.rows;
+//   } catch (error) {
+//     console.error("Error getting likes:", error);
+//     return [];
+//   }
+// }
 
-async function addLike(review_id, user_id) {
-  try {
-    const result = await pool.query(
-      `INSERT INTO review_likes (review_id, user_id)
-       VALUES ($1, $2) ON CONFLICT (review_id, user_id) DO NOTHING RETURNING *`,
-      [review_id, user_id]
-    );
-    return result.rows[0] || { message: "Ya diste like a esta reseña" };
-  } catch (error) {
-    console.error("Error adding like:", error);
-    throw error;
-  }
-}
+// async function addLike(review_id, user_id) {
+//   try {
+//     const result = await pool.query(
+//       `INSERT INTO review_likes (review_id, user_id)
+//        VALUES ($1, $2) ON CONFLICT (review_id, user_id) DO NOTHING RETURNING *`,
+//       [review_id, user_id]
+//     );
+//     return result.rows[0] || { message: "Ya diste like a esta reseña" };
+//   } catch (error) {
+//     console.error("Error adding like:", error);
+//     throw error;
+//   }
+// }
 
-async function removeLike(review_id, user_id) {
-  try {
-    const result = await pool.query(
-      `DELETE FROM review_likes WHERE review_id = $1 AND user_id = $2 RETURNING *`,
-      [review_id, user_id]
-    );
-    return result.rowCount > 0;
-  } catch (error) {
-    console.error("Error removing like:", error);
-    return false;
-  }
-}
+// async function removeLike(review_id, user_id) {
+//   try {
+//     const result = await pool.query(
+//       `DELETE FROM review_likes WHERE review_id = $1 AND user_id = $2 RETURNING *`,
+//       [review_id, user_id]
+//     );
+//     return result.rowCount > 0;
+//   } catch (error) {
+//     console.error("Error removing like:", error);
+//     return false;
+//   }
+// }
 
-// Funciones para manejo de comentarios
-async function getComments(review_id) {
-  try {
-    const result = await pool.query(
-      `SELECT rc.*, u.name as user_name, u.profile_image as user_profile_image
-       FROM review_comments rc
-       JOIN users u ON rc.user_id = u.id
-       WHERE rc.review_id = $1
-       ORDER BY rc.created_at ASC`,
-      [review_id]
-    );
-    return result.rows;
-  } catch (error) {
-    console.error("Error getting comments:", error);
-    return [];
-  }
-}
+// // Funciones para manejo de comentarios
+// async function getComments(review_id) {
+//   try {
+//     const result = await pool.query(
+//       `SELECT rc.*, u.name as user_name, u.profile_image as user_profile_image
+//        FROM review_comments rc
+//        JOIN users u ON rc.user_id = u.id
+//        WHERE rc.review_id = $1
+//        ORDER BY rc.created_at ASC`,
+//       [review_id]
+//     );
+//     return result.rows;
+//   } catch (error) {
+//     console.error("Error getting comments:", error);
+//     return [];
+//   }
+// }
 
-async function addComment(review_id, user_id, comment) {
-  try {
-    const result = await pool.query(
-      `INSERT INTO review_comments (review_id, user_id, comment)
-       VALUES ($1, $2, $3) RETURNING *`,
-      [review_id, user_id, comment]
-    );
-    return result.rows[0];
-  } catch (error) {
-    console.error("Error adding comment:", error);
-    throw error;
-  }
-}
+// async function addComment(review_id, user_id, comment) {
+//   try {
+//     const result = await pool.query(
+//       `INSERT INTO review_comments (review_id, user_id, comment)
+//        VALUES ($1, $2, $3) RETURNING *`,
+//       [review_id, user_id, comment]
+//     );
+//     return result.rows[0];
+//   } catch (error) {
+//     console.error("Error adding comment:", error);
+//     throw error;
+//   }
+// }
 
-async function deleteComment(comment_id, user_id) {
-  try {
-    const result = await pool.query(
-      `DELETE FROM review_comments WHERE id = $1 AND user_id = $2 RETURNING *`,
-      [comment_id, user_id]
-    );
-    return result.rowCount > 0;
-  } catch (error) {
-    console.error("Error deleting comment:", error);
-    return false;
-  }
-}
+// async function deleteComment(comment_id, user_id) {
+//   try {
+//     const result = await pool.query(
+//       `DELETE FROM review_comments WHERE id = $1 AND user_id = $2 RETURNING *`,
+//       [comment_id, user_id]
+//     );
+//     return result.rowCount > 0;
+//   } catch (error) {
+//     console.error("Error deleting comment:", error);
+//     return false;
+//   }
+// }
 
 module.exports = {
   createReview,
@@ -292,10 +333,10 @@ module.exports = {
   updateReview,
   deleteReview,
   filterReviews,
-  getLikes,
-  addLike,
-  removeLike,
-  getComments,
-  addComment,
-  deleteComment,
+  // getLikes,
+  // addLike,
+  // removeLike,
+  // getComments,
+  // addComment,
+  // deleteComment,
 };

@@ -91,75 +91,75 @@ router.delete('/:id',
 );
 
 // Likes y comentarios
-router.get('/:id/likes',
-  /*
-    #swagger.tags = ['Likes']
-    #swagger.summary = 'Obtener likes de reseña'
-    #swagger.parameters['id'] = { in: 'path', required: true, type: 'integer' }
-    #swagger.responses[200] = { description: 'OK', schema: { type: 'array', items: { $ref: '#/definitions/Like' } } }
-    #swagger.responses[404] = { description: 'No encontrada' }
-  */
-  controller.getLikes
-);
+// router.get('/:id/likes',
+//   /*
+//     #swagger.tags = ['Likes']
+//     #swagger.summary = 'Obtener likes de reseña'
+//     #swagger.parameters['id'] = { in: 'path', required: true, type: 'integer' }
+//     #swagger.responses[200] = { description: 'OK', schema: { type: 'array', items: { $ref: '#/definitions/Like' } } }
+//     #swagger.responses[404] = { description: 'No encontrada' }
+//   */
+//   controller.getLikes
+// );
 
-router.post('/:id/likes',
-  /*
-    #swagger.tags = ['Likes']
-    #swagger.summary = 'Agregar like a reseña'
-    #swagger.parameters['id'] = { in: 'path', required: true, type: 'integer' }
-    #swagger.responses[201] = { description: 'Creado', schema: { $ref: '#/definitions/Like' } }
-    #swagger.responses[404] = { description: 'No encontrada' }
-  */
-  controller.addLike
-);
+// router.post('/:id/likes',
+//   /*
+//     #swagger.tags = ['Likes']
+//     #swagger.summary = 'Agregar like a reseña'
+//     #swagger.parameters['id'] = { in: 'path', required: true, type: 'integer' }
+//     #swagger.responses[201] = { description: 'Creado', schema: { $ref: '#/definitions/Like' } }
+//     #swagger.responses[404] = { description: 'No encontrada' }
+//   */
+//   controller.addLike
+// );
 
-router.delete('/:id/likes',
-  /*
-    #swagger.tags = ['Likes']
-    #swagger.summary = 'Eliminar like de reseña'
-    #swagger.parameters['id'] = { in: 'path', required: true, type: 'integer' }
-    #swagger.responses[204] = { description: 'Sin Contenido' }
-    #swagger.responses[404] = { description: 'No encontrada' }
-  */
-  controller.removeLike
-);
+// router.delete('/:id/likes',
+//   /*
+//     #swagger.tags = ['Likes']
+//     #swagger.summary = 'Eliminar like de reseña'
+//     #swagger.parameters['id'] = { in: 'path', required: true, type: 'integer' }
+//     #swagger.responses[204] = { description: 'Sin Contenido' }
+//     #swagger.responses[404] = { description: 'No encontrada' }
+//   */
+//   controller.removeLike
+// );
 
-router.get('/:id/comments',
-  /*
-    #swagger.tags = ['Comments']
-    #swagger.summary = 'Obtener comentarios de reseña'
-    #swagger.parameters['id'] = { in: 'path', required: true, type: 'integer' }
-    #swagger.responses[200] = { description: 'OK', schema: { type: 'array', items: { $ref: '#/definitions/Comment' } } }
-    #swagger.responses[404] = { description: 'No encontrada' }
-  */
-  controller.getComments
-);
+// router.get('/:id/comments',
+//   /*
+//     #swagger.tags = ['Comments']
+//     #swagger.summary = 'Obtener comentarios de reseña'
+//     #swagger.parameters['id'] = { in: 'path', required: true, type: 'integer' }
+//     #swagger.responses[200] = { description: 'OK', schema: { type: 'array', items: { $ref: '#/definitions/Comment' } } }
+//     #swagger.responses[404] = { description: 'No encontrada' }
+//   */
+//   controller.getComments
+// );
 
-router.post('/:id/comments',
-  /*
-    #swagger.tags = ['Comments']
-    #swagger.summary = 'Agregar comentario a reseña'
-    #swagger.parameters['id'] = { in: 'path', required: true, type: 'integer' }
-    #swagger.parameters['body'] = {
-      in: 'body',
-      required: true,
-      schema: { $ref: '#/definitions/CommentCreateInput' }
-    }
-    #swagger.responses[201] = { description: 'Creado', schema: { $ref: '#/definitions/Comment' } }
-    #swagger.responses[404] = { description: 'No encontrada' }
-  */
-  controller.addComment
-);
+// router.post('/:id/comments',
+//   /*
+//     #swagger.tags = ['Comments']
+//     #swagger.summary = 'Agregar comentario a reseña'
+//     #swagger.parameters['id'] = { in: 'path', required: true, type: 'integer' }
+//     #swagger.parameters['body'] = {
+//       in: 'body',
+//       required: true,
+//       schema: { $ref: '#/definitions/CommentCreateInput' }
+//     }
+//     #swagger.responses[201] = { description: 'Creado', schema: { $ref: '#/definitions/Comment' } }
+//     #swagger.responses[404] = { description: 'No encontrada' }
+//   */
+//   controller.addComment
+// );
 
-router.delete('/comments/:commentId',
-  /*
-    #swagger.tags = ['Comments']
-    #swagger.summary = 'Eliminar comentario de reseña'
-    #swagger.parameters['commentId'] = { in: 'path', required: true, type: 'integer' }
-    #swagger.responses[204] = { description: 'Sin Contenido' }
-    #swagger.responses[404] = { description: 'No encontrada' }
-  */
-  controller.deleteComment
-);
+// router.delete('/comments/:commentId',
+//   /*
+//     #swagger.tags = ['Comments']
+//     #swagger.summary = 'Eliminar comentario de reseña'
+//     #swagger.parameters['commentId'] = { in: 'path', required: true, type: 'integer' }
+//     #swagger.responses[204] = { description: 'Sin Contenido' }
+//     #swagger.responses[404] = { description: 'No encontrada' }
+//   */
+//   controller.deleteComment
+// );
 
 module.exports = router;
