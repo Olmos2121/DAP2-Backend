@@ -1,20 +1,7 @@
 const pool = require('../db');
 
 // Funciones para manejo de películas con PostgreSQL
-async function createMovie(movieData) {
-  const { title, year, genre, director, poster_url, description } = movieData;
-  try {
-    const result = await pool.query(
-      `INSERT INTO movies (title, year, genre, director, poster_url, description)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [title, year, genre, director, poster_url, description]
-    );
-    return result.rows[0];
-  } catch (error) {
-    console.error('Error creating movie:', error);
-    throw error;
-  }
-}
+
 
 async function getMovie(id) {
   try {
@@ -64,36 +51,8 @@ async function getMoviesByGenre(genre) {
   }
 }
 
-async function updateMovie(id, movieData) {
-  const { title, year, genre, director, poster_url, description } = movieData;
-  try {
-    const result = await pool.query(
-      `UPDATE movies 
-       SET title = COALESCE($2, title),
-           year = COALESCE($3, year),
-           genre = COALESCE($4, genre),
-           director = COALESCE($5, director),
-           poster_url = COALESCE($6, poster_url),
-           description = COALESCE($7, description)
-       WHERE id = $1 RETURNING *`,
-      [id, title, year, genre, director, poster_url, description]
-    );
-    return result.rows[0];
-  } catch (error) {
-    console.error('Error updating movie:', error);
-    throw error;
-  }
-}
 
-async function deleteMovie(id) {
-  try {
-    const result = await pool.query('DELETE FROM movies WHERE id = $1 RETURNING *', [id]);
-    return result.rowCount > 0;
-  } catch (error) {
-    console.error('Error deleting movie:', error);
-    return false;
-  }
-}
+
 
 async function getMovieStats(id) {
   try {
@@ -137,13 +96,13 @@ async function getMoviesWithRatings() {
 }
 
 module.exports = {
-  createMovie,
+  // createMovie,
   getMovie,
   getAllMovies,
   searchMovies,
   getMoviesByGenre,
-  updateMovie,
-  deleteMovie,
+  // updateMovie,
+  // deleteMovie,
   getMovieStats,
   getMoviesWithRatings,
 };
