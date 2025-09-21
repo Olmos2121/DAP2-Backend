@@ -10,6 +10,5 @@
 
 ## Checklist
 - [ ] Compila / corre tests
-- [ ] Linter OK
 - [ ] Documentación actualizada (si aplica)
 - [ ] Linked Trello card
