@@ -8,7 +8,15 @@
     "dev": "node --watch index.js",
     "prestart": "node swagger.cjs",
     "start": "node index.js",
-    "test": "jest"
+    "test": "jest",
+    "test:watch": "jest --watchAll",
+    "test:coverage": "jest --coverage"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": [
+      "<rootDir>/tests/setupTests.js"
+    ]
   },
   "repository": {
     "type": "git",

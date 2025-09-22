@@ -18,9 +18,7 @@ CREATE TABLE users (
     name VARCHAR(100) NOT NULL,
     email VARCHAR(150) UNIQUE NOT NULL,
     profile_image VARCHAR(500),
-    bio TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    role VARCHAR(50)
 );
 
 -- Tabla de películas
@@ -30,6 +28,7 @@ CREATE TABLE movies (
     year INTEGER,
     genre VARCHAR(100),
     director VARCHAR(100),
+    duration INTEGER, 
     poster_url VARCHAR(500),
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -49,32 +48,12 @@ CREATE TABLE reviews (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabla de likes de reseñas
-CREATE TABLE review_likes (
-    id SERIAL PRIMARY KEY,
-    review_id INTEGER NOT NULL REFERENCES reviews(id) ON DELETE CASCADE,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(review_id, user_id)
-);
-
--- Tabla de comentarios de reseñas
-CREATE TABLE review_comments (
-    id SERIAL PRIMARY KEY,
-    review_id INTEGER NOT NULL REFERENCES reviews(id) ON DELETE CASCADE,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    comment TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
 -- Índices para mejorar performance
 CREATE INDEX idx_reviews_movie_id ON reviews(movie_id);
 CREATE INDEX idx_reviews_user_id ON reviews(user_id);
 CREATE INDEX idx_reviews_rating ON reviews(rating);
 CREATE INDEX idx_reviews_created_at ON reviews(created_at);
 CREATE INDEX idx_reviews_has_spoilers ON reviews(has_spoilers);
-CREATE INDEX idx_review_likes_review_id ON review_likes(review_id);
-CREATE INDEX idx_review_comments_review_id ON review_comments(review_id);
 
 -- Función para actualizar updated_at automáticamente
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -93,13 +72,13 @@ CREATE TRIGGER update_reviews_updated_at BEFORE UPDATE ON reviews
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Insertar usuarios de ejemplo
-INSERT INTO users (name, email, profile_image, bio) VALUES
-('Admin', 'admin@moviereviews.com', 'https://via.placeholder.com/100x100/2C3E50/ECF0F1?text=AD', 'Administrador del sistema de reseñas'),
-('Juan Pérez', 'juan@example.com', 'https://via.placeholder.com/100x100/E74C3C/ECF0F1?text=JP', 'Amante del cine y crítico ocasional'),
-('María García', 'maria@example.com', 'https://via.placeholder.com/100x100/1ABC9C/ECF0F1?text=MG', 'Especialista en ciencia ficción'),
-('Carlos López', 'carlos@example.com', 'https://via.placeholder.com/100x100/F39C12/ECF0F1?text=CL', 'Crítico profesional de cine'),
-('Ana Martín', 'ana@example.com', 'https://via.placeholder.com/100x100/9B59B6/ECF0F1?text=AM', 'Fan de películas de acción'),
-('Luis Rodríguez', 'luis@example.com', 'https://via.placeholder.com/100x100/3498DB/ECF0F1?text=LR', 'Cinéfilo y coleccionista');
+INSERT INTO users (name, email, profile_image) VALUES
+('Admin', 'admin@moviereviews.com', 'https://via.placeholder.com/100x100/2C3E50/ECF0F1?text=AD'),
+('Juan Pérez', 'juan@example.com', 'https://via.placeholder.com/100x100/E74C3C/ECF0F1?text=JP'),
+('María García', 'maria@example.com', 'https://via.placeholder.com/100x100/1ABC9C/ECF0F1?text=MG'),
+('Carlos López', 'carlos@example.com', 'https://via.placeholder.com/100x100/F39C12/ECF0F1?text=CL'),
+('Ana Martín', 'ana@example.com', 'https://via.placeholder.com/100x100/9B59B6/ECF0F1?text=AM'),
+('Luis Rodríguez', 'luis@example.com', 'https://via.placeholder.com/100x100/3498DB/ECF0F1?text=LR');
 
 -- Insertar películas populares
 INSERT INTO movies (title, year, genre, director, poster_url, description) VALUES
@@ -138,33 +117,3 @@ INSERT INTO reviews (movie_id, user_id, title, body, rating, has_spoilers, tags)
 (14, 4, 'Reflexión sobre el amor', 'Her es una película profundamente reflexiva sobre la conexión humana en la era digital. Joaquin Phoenix está brillante como siempre.', 4, false, ARRAY['Reflexiva', 'Amor', 'Tecnología']),
 (15, 5, 'Pixar en su mejor momento', 'Coco es una celebración hermosa de la cultura mexicana y la familia. La animación es espectacular y la historia es profundamente emotiva.', 5, false, ARRAY['Pixar', 'Familia', 'Cultura']);
 
--- Insertar algunos likes de ejemplo
-INSERT INTO review_likes (review_id, user_id) VALUES
-(1, 1), (1, 4), (1, 5), (1, 6),
-(2, 2), (2, 4), (2, 5),
-(3, 3), (3, 4), (3, 6),
-(4, 1), (4, 2), (4, 3), (4, 5),
-(5, 1), (5, 3), (5, 6),
-(6, 1), (6, 2), (6, 5),
-(7, 1), (7, 3), (7, 4), (7, 6),
-(8, 2), (8, 4), (8, 5),
-(9, 1), (9, 2), (9, 3), (9, 6),
-(10, 2), (10, 3), (10, 4),
-(11, 1), (11, 3), (11, 5),
-(12, 1), (12, 4), (12, 6),
-(13, 2), (13, 3), (13, 5),
-(14, 1), (14, 2), (14, 6),
-(15, 1), (15, 2), (15, 3), (15, 4);
-
--- Insertar algunos comentarios de ejemplo
-INSERT INTO review_comments (review_id, user_id, comment) VALUES
-(1, 3, 'Totalmente de acuerdo, la actuación de Brando es icónica'),
-(1, 4, 'La banda sonora también es perfecta'),
-(2, 1, 'Una de mis películas favoritas de todos los tiempos'),
-(3, 2, 'Los diálogos de Tarantino son únicos'),
-(4, 5, 'Heath Ledger se merecía el Oscar póstumamente'),
-(6, 3, 'Cada visionado descubres algo nuevo'),
-(7, 4, 'Bong Joon-ho es un genio del cine'),
-(9, 2, 'Los efectos prácticos siguen siendo impresionantes'),
-(10, 6, 'La música de Howard Shore es épica'),
-(15, 6, 'Me hizo llorar, Pixar sabe cómo tocar el corazón');

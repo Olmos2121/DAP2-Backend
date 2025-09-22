@@ -50,8 +50,8 @@ function validateReviewData(reviewData) {
     errors.push('El contenido debe tener al menos 20 caracteres');
   }
   
-  if (!reviewData.rating || reviewData.rating < 1 || reviewData.rating > 5) {
-    errors.push('La calificación debe estar entre 1 y 5');
+  if (!reviewData.rating || reviewData.rating <= 0 || reviewData.rating > 5) {
+    errors.push('La calificación debe estar entre 0 y 5');
   }
   
   if (!reviewData.movie_id || !Number.isInteger(Number(reviewData.movie_id))) {
