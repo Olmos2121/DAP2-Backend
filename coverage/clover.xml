@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1758261642554" clover="3.2.0">
-  <project timestamp="1758261642554" name="All files">
+<coverage generated="1758567093780" clover="3.2.0">
+  <project timestamp="1758567093780" name="All files">
     <metrics statements="106" coveredstatements="99" conditionals="42" coveredconditionals="38" methods="9" coveredmethods="9" elements="157" coveredelements="146" complexity="0" loc="106" ncloc="106" packages="1" files="2" classes="2"/>
     <file name="reviewsModel.js" path="D:\Github\DAP2-Backend\models\reviewsModel.js">
       <metrics statements="94" coveredstatements="87" conditionals="42" coveredconditionals="38" methods="7" coveredmethods="7"/>
@@ -102,17 +102,17 @@
     <file name="usersModel.js" path="D:\Github\DAP2-Backend\models\usersModel.js">
       <metrics statements="12" coveredstatements="12" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="2"/>
       <line num="1" count="1" type="stmt"/>
-      <line num="22" count="3" type="stmt"/>
-      <line num="23" count="3" type="stmt"/>
-      <line num="24" count="2" type="stmt"/>
-      <line num="26" count="1" type="stmt"/>
-      <line num="27" count="1" type="stmt"/>
-      <line num="32" count="3" type="stmt"/>
-      <line num="33" count="3" type="stmt"/>
-      <line num="34" count="2" type="stmt"/>
-      <line num="36" count="1" type="stmt"/>
-      <line num="37" count="1" type="stmt"/>
-      <line num="119" count="1" type="stmt"/>
+      <line num="5" count="3" type="stmt"/>
+      <line num="6" count="3" type="stmt"/>
+      <line num="7" count="2" type="stmt"/>
+      <line num="9" count="1" type="stmt"/>
+      <line num="10" count="1" type="stmt"/>
+      <line num="15" count="3" type="stmt"/>
+      <line num="16" count="3" type="stmt"/>
+      <line num="17" count="2" type="stmt"/>
+      <line num="19" count="1" type="stmt"/>
+      <line num="20" count="1" type="stmt"/>
+      <line num="24" count="1" type="stmt"/>
     </file>
   </project>
 </coverage>
