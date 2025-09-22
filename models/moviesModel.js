@@ -96,13 +96,10 @@ async function getMoviesWithRatings() {
 }
 
 module.exports = {
-  // createMovie,
   getMovie,
   getAllMovies,
   searchMovies,
   getMoviesByGenre,
-  // updateMovie,
-  // deleteMovie,
   getMovieStats,
   getMoviesWithRatings,
 };

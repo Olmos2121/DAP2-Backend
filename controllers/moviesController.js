@@ -1,7 +1,6 @@
 const model = require('../models/moviesModel');
 
 
-
 async function getMovie(req, res) {
   try {
     const movie = await model.getMovieStats(req.params.id);
@@ -12,7 +11,7 @@ async function getMovie(req, res) {
   }
 }
 
-async function getAllMovies(req, res) {
+async function getAllMovies(req, res) { //paginar
   try {
     const movies = await model.getMoviesWithRatings();
     res.json(movies);
@@ -45,14 +44,9 @@ async function getMoviesByGenre(req, res) {
   }
 }
 
-
-
 module.exports = {
-  // createMovie,
   getMovie,
   getAllMovies,
   searchMovies,
   getMoviesByGenre,
-  // updateMovie,
-  // deleteMovie,
 };
