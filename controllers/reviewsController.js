@@ -1,10 +1,8 @@
-// controllers/reviewsController.js
 const pool = require("../db");
 const model = require("../models/reviewsModel");
 const {
   validateReviewData,
   validateCommentData,
-  validatePagination,
   sanitizeInput,
 } = require("../utils/validation");
 
@@ -192,24 +190,24 @@ async function getLikes(req, res) {
   }
 }
 
-async function addLike(req, res) {
-  try {
-    const like = await model.addLike(req.params.id, req.body.user_id);
-    res.status(201).json(like);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-}
+// async function addLike(req, res) {
+//   try {
+//     const like = await model.addLike(req.params.id, req.body.user_id);
+//     res.status(201).json(like);
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// }
 
-async function removeLike(req, res) {
-  try {
-    const removed = await model.removeLike(req.params.id, req.body.user_id);
-    if (!removed) return res.status(404).json({ error: "Like no encontrado" });
-    res.json({ message: "Like eliminado" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-}
+// async function removeLike(req, res) {
+//   try {
+//     const removed = await model.removeLike(req.params.id, req.body.user_id);
+//     if (!removed) return res.status(404).json({ error: "Like no encontrado" });
+//     res.json({ message: "Like eliminado" });
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// }
 
 async function getComments(req, res) {
   try {
@@ -220,55 +218,55 @@ async function getComments(req, res) {
   }
 }
 
-async function addComment(req, res) {
-  try {
-    const errors = validateCommentData(req.body);
-    if (errors.length > 0)
-      return res
-        .status(400)
-        .json({ error: "Datos inválidos", details: errors });
+// async function addComment(req, res) {
+//   try {
+//     const errors = validateCommentData(req.body);
+//     if (errors.length > 0)
+//       return res
+//         .status(400)
+//         .json({ error: "Datos inválidos", details: errors });
 
-    const sanitizedComment = sanitizeInput(req.body.comment);
-    const comment = await model.addComment(
-      req.params.id,
-      req.body.user_id,
-      sanitizedComment
-    );
-    res.status(201).json(comment);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-}
+//     const sanitizedComment = sanitizeInput(req.body.comment);
+//     const comment = await model.addComment(
+//       req.params.id,
+//       req.body.user_id,
+//       sanitizedComment
+//     );
+//     res.status(201).json(comment);
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// }
 
-async function deleteComment(req, res) {
-  try {
-    const deleted = await model.deleteComment(
-      req.params.commentId,
-      req.body.user_id
-    );
-    if (!deleted)
-      return res.status(404).json({ error: "Comentario no encontrado" });
-    res.json({ message: "Comentario eliminado" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-}
+// async function deleteComment(req, res) {
+//   try {
+//     const deleted = await model.deleteComment(
+//       req.params.commentId,
+//       req.body.user_id
+//     );
+//     if (!deleted)
+//       return res.status(404).json({ error: "Comentario no encontrado" });
+//     res.json({ message: "Comentario eliminado" });
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// }
 
-async function getStats(req, res) {
-  try {
-    const result = await pool.query(`
-      SELECT
-        (SELECT COUNT(*) FROM reviews) AS total_reviews,
-        (SELECT COUNT(DISTINCT movie_id) FROM reviews) AS movies_reviewed,
-        (SELECT COUNT(DISTINCT user_id) FROM reviews) AS active_users,
-        COALESCE((SELECT COUNT(*) FROM review_likes), 0) AS total_likes
-    `);
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error("getStats error:", err);
-    res.status(500).json({ error: err.message });
-  }
-}
+// async function getStats(req, res) {
+//   try {
+//     const result = await pool.query(`
+//       SELECT
+//         (SELECT COUNT(*) FROM reviews) AS total_reviews,
+//         (SELECT COUNT(DISTINCT movie_id) FROM reviews) AS movies_reviewed,
+//         (SELECT COUNT(DISTINCT user_id) FROM reviews) AS active_users,
+//         COALESCE((SELECT COUNT(*) FROM review_likes), 0) AS total_likes
+//     `);
+//     res.json(result.rows[0]);
+//   } catch (err) {
+//     console.error("getStats error:", err);
+//     res.status(500).json({ error: err.message });
+//   }
+// }
 
 module.exports = {
   createReview,
@@ -277,10 +275,10 @@ module.exports = {
   deleteReview,
   filterReviews,
   getLikes,
-  addLike,
-  removeLike,
+  // addLike,
+  // removeLike,
   getComments,
-  addComment,
-  deleteComment,
-  getStats,
+  // addComment,
+  // deleteComment,
+  // getStats,
 };
