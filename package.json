@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "predev": "node swagger.cjs",
     "dev": "node --watch index.js",
@@ -30,6 +31,7 @@
   },
   "homepage": "https://github.com/Olmos2121/DAP2-Backend#readme",
   "dependencies": {
+    "amqplib": "^0.10.9",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
