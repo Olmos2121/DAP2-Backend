@@ -1,5 +1,7 @@
 const pool = require("../db");
 const model = require("../models/reviewsModel");
+const { publishReviewEvent } = require('../utils/rabbitPublisher');
+
 const {
   validateReviewData,
   validateCommentData,
@@ -45,7 +47,7 @@ function badRequest(res, message) {
   return res.status(400).json({ error: message });
 }
 
-async function createReview(req, res) {
+/* async function createReview(req, res) {
   try {
     // Validaciones básicas (usás tu utils/validation)
     const errors = validateReviewData(req.body);
@@ -66,6 +68,36 @@ async function createReview(req, res) {
     const mapped = mapPgErrorToHttp(err);
     res.status(mapped.status).json({ error: mapped.message });
   }
+} */
+async function createReview(req, res) {
+  try {
+    // Validaciones básicas (usás tu utils/validation)
+    const errors = validateReviewData(req.body);
+    if (errors.length > 0)
+      return res
+        .status(400)
+        .json({ error: "Datos inválidos", details: errors });
+
+    const sanitized = {
+      ...req.body,
+      title: sanitizeInput(req.body.title),
+      body: sanitizeInput(req.body.body),
+    };
+
+    const review = await model.createReview(sanitized);
+
+    // Publicar evento
+    await publishReviewEvent({
+      type: 'review.created',
+      review,
+      sysDate: new Date().toISOString()
+    });
+
+    res.status(201).json(review);
+  } catch (err) {
+    const mapped = mapPgErrorToHttp(err);
+    res.status(mapped.status).json({ error: mapped.message });
+  }
 }
 
 async function getReview(req, res) {
@@ -78,7 +110,7 @@ async function getReview(req, res) {
   }
 }
 
-async function updateReview(req, res) {
+/* async function updateReview(req, res) {
   try {
     const review = await model.updateReview(req.params.id, req.body);
     if (!review) return res.status(404).json({ error: "Reseña no encontrada" });
@@ -86,9 +118,27 @@ async function updateReview(req, res) {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+} */
+
+async function updateReview(req, res) {
+  try {
+    const review = await model.updateReview(req.params.id, req.body);
+    if (!review) return res.status(404).json({ error: "Reseña no encontrada" });
+    
+    // Publicar evento
+    await publishReviewEvent({
+      type: 'review.updated',
+      review,
+      sysDate: new Date().toISOString()
+    });
+
+    res.json(review);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 }
 
-async function deleteReview(req, res) {
+/* async function deleteReview(req, res) {
   try {
     const deleted = await model.deleteReview(req.params.id);
     if (!deleted)
@@ -98,7 +148,27 @@ async function deleteReview(req, res) {
     const mapped = mapPgErrorToHttp(err);
     res.status(mapped.status).json({ error: mapped.message });
   }
-}
+} */
+
+async function deleteReview(req, res) {
+  try {
+    const deleted = await model.deleteReview(req.params.id);
+    if (!deleted)
+      return res.status(404).json({ error: "Reseña no encontrada" });
+    
+    // Publicar evento
+    await publishReviewEvent({
+      type: 'review.deleted',
+      reviewId: req.params.id,
+      sysDate: new Date().toISOString()
+    });
+
+    res.json({ message: "Reseña eliminada" });
+  } catch (err) {
+    const mapped = mapPgErrorToHttp(err);
+    res.status(mapped.status).json({ error: mapped.message });
+  }
+} 
 
 async function filterReviews(req, res) {
   try {
