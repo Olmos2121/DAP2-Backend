@@ -1,5 +1,5 @@
-const amqp = require('amqplib');
-
+//const amqp = require('amqplib');
+import amqp from 'amqplib';
 
 const RABBIT_URL = 'amqp://guest:guest@localhost:5672';
 const QUEUE = 'reviews.events';

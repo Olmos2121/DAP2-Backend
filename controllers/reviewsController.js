@@ -1,12 +1,21 @@
-const pool = require("../db");
-const model = require("../models/reviewsModel");
-const { publishReviewEvent } = require('../utils/rabbitPublisher');
+//const pool = require("../db");
+import pool from '../db.js';
+import * as model from "../models/reviewsModel.js";
+import { publishReviewEvent } from '../utils/rabbitPublisher.js';
+/* const model = require("../models/reviewsModel");
+const { publishReviewEvent } = require('../utils/rabbitPublisher'); */
 
-const {
+import {
   validateReviewData,
   validateCommentData,
   sanitizeInput,
-} = require("../utils/validation");
+} from '../utils/validation.js';
+
+/* const {
+  validateReviewData,
+  validateCommentData,
+  sanitizeInput,
+} = require("../utils/validation"); */
 
 const VALID_SORTS = {
   recent: "r.created_at DESC, r.id DESC",
@@ -337,8 +346,7 @@ async function getComments(req, res) {
 //     res.status(500).json({ error: err.message });
 //   }
 // }
-
-module.exports = {
+export {
   createReview,
   getReview,
   updateReview,
@@ -352,3 +360,17 @@ module.exports = {
   // deleteComment,
   // getStats,
 };
+/* module.exports = {
+  createReview,
+  getReview,
+  updateReview,
+  deleteReview,
+  filterReviews,
+  getLikes,
+  // addLike,
+  // removeLike,
+  getComments,
+  // addComment,
+  // deleteComment,
+  // getStats,
+}; */
