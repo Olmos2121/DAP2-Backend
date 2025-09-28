@@ -9,15 +9,9 @@
     "dev": "node --watch index.js",
     "prestart": "node swagger.cjs",
     "start": "node index.js",
-    "test": "jest",
-    "test:watch": "jest --watchAll",
-    "test:coverage": "jest --coverage"
-  },
-  "jest": {
-    "testEnvironment": "node",
-    "setupFilesAfterEnv": [
-      "<rootDir>/tests/setupTests.js"
-    ]
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --config jest.config.mjs",
+    "test:coverage": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --coverage --runInBand --config jest.config.mjs",
+    "test:clear": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --clearCache"
   },
   "repository": {
     "type": "git",
