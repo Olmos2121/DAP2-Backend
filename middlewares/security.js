@@ -54,17 +54,65 @@ function validateNumericParams(req, res, next) {
 // Middleware para limpiar datos de entrada
 function sanitizeRequest(req, res, next) {
   if (req.body && typeof req.body === "object") {
+    req.body = sanitizeObject(req.body); // ✅ seguro
+  }
+
+  if (req.query && typeof req.query === "object") {
+    const sanitizedQuery = sanitizeObject(req.query);
+    
+    // ✅ Sobrescribimos propiedades UNA A UNA, sin asignar req.query entero
+    Object.keys(sanitizedQuery).forEach((key) => {
+      req.query[key] = sanitizedQuery[key];
+    });
+  }
+
+  next();
+}
+
+/* function sanitizeRequest(req, res, next) {
+  if (req.body && typeof req.body === "object") {
     req.body = sanitizeObject(req.body);
   }
 
   if (req.query && typeof req.query === "object") {
     req.query = sanitizeObject(req.query);
   }
+  
 
   next();
+} */
+function sanitizeObject(obj) {
+  if (!obj || typeof obj !== "object") {
+    return obj;
+  }
+
+  const sanitized = {};
+
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const value = obj[key];
+
+      if (typeof value === "string") {
+        sanitized[key] = value
+          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+          .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "")
+          .trim();
+      } else if (Array.isArray(value)) {
+        sanitized[key] = value.map((item) =>
+          typeof item === "string" ? item.trim().substring(0, 100) : item
+        );
+      } else if (typeof value === "object" && value !== null) {
+        sanitized[key] = sanitizeObject(value); // 🪞 sanitiza recursivamente
+      } else {
+        sanitized[key] = value;
+      }
+    }
+  }
+
+  return sanitized;
 }
 
-function sanitizeObject(obj) {
+/* function sanitizeObject(obj) {
   if (!obj || typeof obj !== "object") {
     return obj;
   }
@@ -92,7 +140,7 @@ function sanitizeObject(obj) {
   }
 
   return sanitized;
-}
+} */
 
 // Middleware para verificar Content-Type en POST/PUT
 function validateContentType(req, res, next) {
@@ -107,10 +155,15 @@ function validateContentType(req, res, next) {
   }
   next();
 }
-
-module.exports = {
+export {
   securityHeaders,
   validateNumericParams,
   sanitizeRequest,
   validateContentType,
 };
+/* module.exports = {
+  securityHeaders,
+  validateNumericParams,
+  sanitizeRequest,
+  validateContentType,
+}; */

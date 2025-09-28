@@ -15,7 +15,8 @@ import cors from 'cors';
 
 //const reviewsRoutes = require("./routes/reviews");
 import reviewsRoutes from './routes/reviews.js';
-const usersRoutes = require("./routes/users");
+//const usersRoutes = require("./routes/users");
+import usersRoutes from './routes/users.js'; // ✅ con extensión .js
 //const moviesRoutes = require("./routes/movies");
 import moviesRoutes from './routes/movies.js';
 import './consumers/movieConsumer.js';
@@ -27,8 +28,15 @@ const swaggerFile = JSON.parse(
 
 
 // Middlewares de seguridad y performance
-const { rateLimiter, createContentLimiter } = require('./middlewares/rateLimiting');
-const { securityHeaders, validateNumericParams, sanitizeRequest, validateContentType } = require('./middlewares/security');
+//const { rateLimiter, createContentLimiter } = require('./middlewares/rateLimiting');
+import { rateLimiter, createContentLimiter } from './middlewares/rateLimiting.js';
+//const { securityHeaders, validateNumericParams, sanitizeRequest, validateContentType } = require('./middlewares/security');
+import {
+  securityHeaders,
+  validateNumericParams,
+  sanitizeRequest,
+  validateContentType
+} from './middlewares/security.js';
 const app = express();
 
 // Configuración mejorada para producción
@@ -146,3 +154,4 @@ app.listen(PORT, () => {
   console.log(`🔍 Health Check: http://localhost:${PORT}/health`);
   console.log(`🌐 Entorno: ${process.env.NODE_ENV || 'development'}`);
 });
+

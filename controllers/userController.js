@@ -1,5 +1,8 @@
-const model = require('../models/usersModel');
-const reviewsModel = require('../models/reviewsModel'); // ✅ Importar modelo de reviews
+/* const model = require('../models/usersModel');
+const reviewsModel = require('../models/reviewsModel'); */ // ✅ Importar modelo de reviews
+import model from '../models/usersModel.js';
+import * as reviewsModel from '../models/reviewsModel.js';
+ 
 
 async function getUser(req, res) {
   try {
@@ -68,9 +71,13 @@ async function getAllUsers(req, res) {
     res.status(500).json({ error: err.message });
   }
 }
-
-module.exports = {
+export default {
   getUser,
   getUserReviews,
   getAllUsers,
 };
+/* module.exports = {
+  getUser,
+  getUserReviews,
+  getAllUsers,
+}; */

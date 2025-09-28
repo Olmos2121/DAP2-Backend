@@ -1,6 +1,8 @@
-const express = require('express');
+//const express = require('express');
+import express from 'express';
 const router = express.Router();
-const controller = require('../controllers/userController');
+//const controller = require('../controllers/userController');
+import controller from '../controllers/userController.js';
 
 // CRUD Usuarios
 router.get('/:id/reviews', 
@@ -34,5 +36,5 @@ router.get('/',
     controller.getAllUsers
 );
 
-
-module.exports = router;
+export default router;
+//module.exports = router;
