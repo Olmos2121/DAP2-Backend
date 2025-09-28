@@ -1,13 +1,30 @@
-require("dotenv").config();
-require('./workers/aiModerationWorker');
-const express = require("express");
-const swaggerUi = require("swagger-ui-express");
-const swaggerFile = require("./swagger-output.json");
-const cors = require('cors');
+//require("dotenv").config();
+import { readFile } from 'fs/promises';
+import dotenv from 'dotenv';
+dotenv.config();
+//require('./workers/aiModerationWorker');
+import './workers/aiModerationWorker.js';
+//const express = require("express");
+import express from 'express';
+//const swaggerUi = require("swagger-ui-express");
+import swaggerUi from 'swagger-ui-express';
+//const swaggerFile = require("./swagger-output.json");
+//import swaggerFile from './swagger-output.json' assert { type: "json" };
+//const cors = require('cors');
+import cors from 'cors';
 
-const reviewsRoutes = require("./routes/reviews");
+//const reviewsRoutes = require("./routes/reviews");
+import reviewsRoutes from './routes/reviews.js';
 const usersRoutes = require("./routes/users");
-const moviesRoutes = require("./routes/movies");
+//const moviesRoutes = require("./routes/movies");
+import moviesRoutes from './routes/movies.js';
+import './consumers/movieConsumer.js';
+
+
+const swaggerFile = JSON.parse(
+  await readFile(new URL('./swagger-output.json', import.meta.url))
+);
+
 
 // Middlewares de seguridad y performance
 const { rateLimiter, createContentLimiter } = require('./middlewares/rateLimiting');
