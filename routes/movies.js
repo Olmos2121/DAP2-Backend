@@ -1,6 +1,9 @@
-const express = require('express');
+//const express = require('express');
 const router = express.Router();
-const controller = require('../controllers/moviesController');
+//const controller = require('../controllers/moviesController');
+
+import express from 'express';
+import * as controller from '../controllers/moviesController.js';
 
 // CRUD Películas
 
@@ -49,6 +52,6 @@ router.get('/',
 
 
 
+export default router;
 
-
-module.exports = router;
+//module.exports = router;

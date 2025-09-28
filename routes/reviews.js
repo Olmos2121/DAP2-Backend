@@ -1,6 +1,9 @@
-const express = require('express');
+//const express = require('express');
 const router = express.Router();
-const controller = require('../controllers/reviewsController');
+//const controller = require('../controllers/reviewsController');
+
+import express from 'express';
+import * as controller from '../controllers/reviewsController.js';
 
 // CRUD Reseñas
 router.post('/',
@@ -104,4 +107,5 @@ router.get('/:id/comments',
   controller.getComments
 );
 
-module.exports = router;
+//module.exports = router;
+export default router;

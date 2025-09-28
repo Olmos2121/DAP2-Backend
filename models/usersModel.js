@@ -1,4 +1,5 @@
-const pool = require('../db');
+//const pool = require('../db');
+import pool from '../db.js';
 
 // Funciones para manejo de usuarios con PostgreSQL
 async function getUser(id) {
@@ -20,8 +21,12 @@ async function getAllUsers() {
     return [];
   }
 }
-
-module.exports = {
+export default {
   getUser,
   getAllUsers,
+  //getUserReviews,
 };
+/* module.exports = {
+  getUser,
+  getAllUsers,
+}; */

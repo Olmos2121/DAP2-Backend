@@ -1,5 +1,5 @@
-const pool = require('../db');
-
+//const pool = require('../db');
+import pool from '../db.js';
 // Funciones para manejo de películas con PostgreSQL
 
 
@@ -94,8 +94,7 @@ async function getMoviesWithRatings() {
     return [];
   }
 }
-
-module.exports = {
+export default {
   getMovie,
   getAllMovies,
   searchMovies,
@@ -103,3 +102,11 @@ module.exports = {
   getMovieStats,
   getMoviesWithRatings,
 };
+/* module.exports = {
+  getMovie,
+  getAllMovies,
+  searchMovies,
+  getMoviesByGenre,
+  getMovieStats,
+  getMoviesWithRatings,
+}; */
