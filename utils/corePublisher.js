@@ -36,26 +36,17 @@ async function publishReviewEvent(eventType, routingKey, reviewData) {
   return response.json().catch(() => ({}));
 }
 
-/**
- * Publica un evento de creación de reseña
- * @param {object} review - JSON con datos de la reseña
- */
+
 export async function publishReviewCreated(review) {
-  return publishReviewEvent("review.created", "review.created", review);
+  return publishReviewEvent("rating.created", "rating.created", review);
 }
 
-/**
- * Publica un evento de actualización de reseña
- * @param {object} review - JSON con datos de la reseña
- */
+
 export async function publishReviewUpdated(review) {
-  return publishReviewEvent("review.updated", "review.updated", review);
+  return publishReviewEvent("rating.updated", "rating.updated", review);
 }
 
-/**
- * Publica un evento de eliminación de reseña
- * @param {number|string} reviewId - ID de la reseña eliminada
- */
+
 export async function publishReviewDeleted(reviewId) {
-  return publishReviewEvent("review.deleted", "review.deleted", { id: reviewId });
+  return publishReviewEvent("rating.deleted", "rating.deleted", { id: reviewId });
 }

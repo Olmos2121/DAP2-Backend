@@ -1,9 +1,14 @@
 //const pool = require("../db");
 import pool from '../db.js';
 import * as model from "../models/reviewsModel.js";
-import { publishReviewEvent } from '../utils/rabbitPublisher.js';
+//import { publishReviewEvent } from '../utils/corePublisher.js';
 /* const model = require("../models/reviewsModel");
 const { publishReviewEvent } = require('../utils/rabbitPublisher'); */
+import { 
+  publishReviewCreated, 
+  publishReviewUpdated, 
+  publishReviewDeleted 
+} from '../utils/corePublisher.js';
 
 import {
   validateReviewData,
@@ -11,11 +16,6 @@ import {
   sanitizeInput,
 } from '../utils/validation.js';
 
-/* const {
-  validateReviewData,
-  validateCommentData,
-  sanitizeInput,
-} = require("../utils/validation"); */
 
 const VALID_SORTS = {
   recent: "r.created_at DESC, r.id DESC",
@@ -95,12 +95,8 @@ async function createReview(req, res) {
 
     const review = await model.createReview(sanitized);
 
-    // Publicar evento
-    await publishReviewEvent({
-      type: 'review.created',
-      review,
-      sysDate: new Date().toISOString()
-    });
+     // Publicar evento al core
+    await publishReviewCreated(review);
 
     res.status(201).json(review);
   } catch (err) {
@@ -134,12 +130,8 @@ async function updateReview(req, res) {
     const review = await model.updateReview(req.params.id, req.body);
     if (!review) return res.status(404).json({ error: "Reseña no encontrada" });
     
-    // Publicar evento
-    await publishReviewEvent({
-      type: 'review.updated',
-      review,
-      sysDate: new Date().toISOString()
-    });
+     // Publicar evento al core
+    await publishReviewUpdated(review);
 
     res.json(review);
   } catch (err) {
@@ -165,12 +157,8 @@ async function deleteReview(req, res) {
     if (!deleted)
       return res.status(404).json({ error: "Reseña no encontrada" });
     
-    // Publicar evento
-    await publishReviewEvent({
-      type: 'review.deleted',
-      reviewId: req.params.id,
-      sysDate: new Date().toISOString()
-    });
+    // Publicar evento al core
+    await publishReviewDeleted(req.params.id);
 
     res.json({ message: "Reseña eliminada" });
   } catch (err) {
@@ -360,17 +348,4 @@ export {
   // deleteComment,
   // getStats,
 };
-/* module.exports = {
-  createReview,
-  getReview,
-  updateReview,
-  deleteReview,
-  filterReviews,
-  getLikes,
-  // addLike,
-  // removeLike,
-  getComments,
-  // addComment,
-  // deleteComment,
-  // getStats,
-}; */
+
