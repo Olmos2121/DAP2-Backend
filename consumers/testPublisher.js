@@ -1,9 +1,6 @@
 // testPublisher.js
-import {
-  publishReviewCreated,
-  publishReviewUpdated,
-  publishReviewDeleted
-} from "./corePublisher.js"; // ajustá la ruta si lo guardaste en /utils
+import { publishReviewCreated, publishReviewUpdated, publishReviewDeleted } from '../utils/corePublisher.js';
+
 
 const review = {
   id: 101,

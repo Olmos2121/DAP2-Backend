@@ -1,12 +1,13 @@
 import fetch from "node-fetch"; // Si usás Node 18+ podés usar global fetch
 import crypto from "crypto";
 
-const CORE_URL = "http://core-letterboxd.us-east-2.elasticbeanstalk.com/events/receive";
+//const CORE_URL = "http://core-letterboxd.us-east-2.elasticbeanstalk.com/events/receive";
+const CORE_URL = "https://webhook.site/77a7edd6-6009-40e4-a9f8-da61e59a574c";
 
 /**
  * Envía un evento al core
  * @param {string} eventType - Tipo de evento (ej: "review.created")
- * @param {string} routingKey - Routing key (ej: "review.created")
+ * @param {string} routingKey - Routing key (ej: "rating.created")
  * @param {object} reviewData - Datos de la reseña
  */
 async function publishReviewEvent(eventType, routingKey, reviewData) {
@@ -38,6 +39,18 @@ async function publishReviewEvent(eventType, routingKey, reviewData) {
 
 // Métodos públicos
 export async function publishReviewCreated(review) {
+  return publishReviewEvent("review.created", "rating.created", review);
+}
+
+export async function publishReviewUpdated(review) {
+  return publishReviewEvent("review.updated", "rating.updated", review);
+}
+
+export async function publishReviewDeleted(reviewId) {
+  return publishReviewEvent("review.deleted", "rating.deleted", { id: reviewId });
+}
+
+/* export async function publishReviewCreated(review) {
   return publishReviewEvent("review.created", "review.created", review);
 }
 
@@ -49,4 +62,4 @@ export async function publishReviewUpdated(review) {
 
 export async function publishReviewDeleted(reviewId) {
   return publishReviewEvent("review.deleted", "review.deleted", { id: reviewId });
-}
+} */
