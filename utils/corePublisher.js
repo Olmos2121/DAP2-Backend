@@ -36,17 +36,17 @@ async function publishReviewEvent(eventType, routingKey, reviewData) {
   return response.json().catch(() => ({}));
 }
 
-
+// Métodos públicos
 export async function publishReviewCreated(review) {
-  return publishReviewEvent("rating.created", "rating.created", review);
+  return publishReviewEvent("review.created", "review.created", review);
 }
 
 
 export async function publishReviewUpdated(review) {
-  return publishReviewEvent("rating.updated", "rating.updated", review);
+  return publishReviewEvent("review.updated", "review.updated", review);
 }
 
 
 export async function publishReviewDeleted(reviewId) {
-  return publishReviewEvent("rating.deleted", "rating.deleted", { id: reviewId });
+  return publishReviewEvent("review.deleted", "review.deleted", { id: reviewId });
 }
