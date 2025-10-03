@@ -42,17 +42,21 @@
         "responses": {
           "200": {
             "description": "OK"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "429": {
-            "description": "Too Many Requests"
           }
         }
       }
     },
-    "/reviews/": {
+    "/swagger.json": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/reviews": {
       "post": {
         "tags": [
           "Reviews"
@@ -84,9 +88,36 @@
           },
           "400": {
             "description": "Bad Request"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Movies"
+        ],
+        "summary": "Obtener todas las películas",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "array"
+                },
+                "items": {
+                  "$ref": "#/definitions/Movie"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
           },
-          "429": {
-            "description": "Too Many Requests"
+          "default": {
+            "description": ""
           }
         }
       }
@@ -102,16 +133,6 @@
           "application/json"
         ],
         "parameters": [
-          {
-            "name": "tags",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "date_range",
-            "in": "query",
-            "type": "string"
-          },
           {
             "name": "movie_id",
             "in": "query",
@@ -179,29 +200,17 @@
                 "name": "main"
               }
             }
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "429": {
-            "description": "Too Many Requests"
-          },
-          "500": {
-            "description": "Internal Server Error"
           }
         }
       }
     },
-    "/reviews/{id}": {
+    "/movies/{id}": {
       "get": {
         "tags": [
-          "Reviews"
+          "Movies"
         ],
-        "summary": "Obtener reseña",
+        "summary": "Obtener película por ID",
         "description": "",
-        "produces": [
-          "nosniff"
-        ],
         "parameters": [
           {
             "name": "id",
@@ -214,20 +223,14 @@
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/Review"
+              "$ref": "#/definitions/Movie"
             }
           },
-          "400": {
-            "description": "Bad Request"
-          },
           "404": {
-            "description": "No encontrada"
+            "description": "No encontrado"
           },
-          "429": {
-            "description": "Too Many Requests"
-          },
-          "500": {
-            "description": "Internal Server Error"
+          "default": {
+            "description": ""
           }
         }
       },
@@ -237,9 +240,6 @@
         ],
         "summary": "Actualizar reseña",
         "description": "Actualiza una reseña existente.",
-        "produces": [
-          "nosniff"
-        ],
         "parameters": [
           {
             "name": "id",
@@ -263,17 +263,8 @@
               "$ref": "#/definitions/Review"
             }
           },
-          "400": {
-            "description": "Bad Request"
-          },
           "404": {
             "description": "No encontrada"
-          },
-          "429": {
-            "description": "Too Many Requests"
-          },
-          "500": {
-            "description": "Internal Server Error"
           }
         }
       },
@@ -283,9 +274,6 @@
         ],
         "summary": "Eliminar reseña",
         "description": "Elimina una reseña existente.",
-        "produces": [
-          "nosniff"
-        ],
         "parameters": [
           {
             "name": "id",
@@ -295,277 +283,11 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "OK"
-          },
           "204": {
             "description": "Sin Contenido"
           },
-          "400": {
-            "description": "Bad Request"
-          },
           "404": {
             "description": "No encontrada"
-          },
-          "429": {
-            "description": "Too Many Requests"
-          }
-        }
-      }
-    },
-    "/reviews/{id}/likes": {
-      "get": {
-        "tags": [
-          "Likes"
-        ],
-        "summary": "Obtener likes de reseña",
-        "description": "",
-        "produces": [
-          "nosniff"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "integer"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "example": "array"
-                },
-                "items": {
-                  "$ref": "#/definitions/Like"
-                }
-              },
-              "xml": {
-                "name": "main"
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "404": {
-            "description": "No encontrada"
-          },
-          "429": {
-            "description": "Too Many Requests"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/reviews/{id}/comments": {
-      "get": {
-        "tags": [
-          "Comments"
-        ],
-        "summary": "Obtener comentarios de reseña",
-        "description": "",
-        "produces": [
-          "nosniff"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "integer"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "example": "array"
-                },
-                "items": {
-                  "$ref": "#/definitions/Comment"
-                }
-              },
-              "xml": {
-                "name": "main"
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "404": {
-            "description": "No encontrada"
-          },
-          "429": {
-            "description": "Too Many Requests"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/users/{id}/reviews": {
-      "get": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Obtener reseñas de un usuario por ID",
-        "description": "Devuelve todas las reseñas de un usuario específico.",
-        "produces": [
-          "nosniff"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "integer"
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "type": "string"
-          },
-          {
-            "name": "otherFilters",
-            "in": "query",
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "example": "array"
-                },
-                "items": {
-                  "$ref": "#/definitions/Review"
-                }
-              },
-              "xml": {
-                "name": "main"
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "404": {
-            "description": "No encontrado"
-          },
-          "429": {
-            "description": "Too Many Requests"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/users/{id}": {
-      "get": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Obtener usuario por ID",
-        "description": "",
-        "produces": [
-          "nosniff"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "integer"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/User"
-            }
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "404": {
-            "description": "No encontrado"
-          },
-          "429": {
-            "description": "Too Many Requests"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/users/": {
-      "get": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Obtener todos los usuarios",
-        "description": "",
-        "produces": [
-          "nosniff"
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "example": "array"
-                },
-                "items": {
-                  "$ref": "#/definitions/User"
-                }
-              },
-              "xml": {
-                "name": "main"
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "429": {
-            "description": "Too Many Requests"
-          },
-          "500": {
-            "description": "Internal Server Error"
           }
         }
       }
@@ -577,15 +299,7 @@
         ],
         "summary": "Buscar películas",
         "description": "Busca películas por título o descripción.",
-        "produces": [
-          "nosniff"
-        ],
         "parameters": [
-          {
-            "name": "q",
-            "in": "query",
-            "type": "string"
-          },
           {
             "name": "query",
             "in": "query",
@@ -612,17 +326,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request"
-          },
           "404": {
             "description": "No encontrado"
-          },
-          "429": {
-            "description": "Too Many Requests"
-          },
-          "500": {
-            "description": "Internal Server Error"
           }
         }
       }
@@ -634,9 +339,6 @@
         ],
         "summary": "Obtener películas por género",
         "description": "",
-        "produces": [
-          "nosniff"
-        ],
         "parameters": [
           {
             "name": "genre",
@@ -664,104 +366,82 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request"
-          },
           "404": {
             "description": "No encontrado"
-          },
-          "429": {
-            "description": "Too Many Requests"
-          },
-          "500": {
-            "description": "Internal Server Error"
           }
         }
       }
     },
-    "/movies/{id}": {
+    "/users": {
       "get": {
         "tags": [
-          "Movies"
+          "Users"
         ],
-        "summary": "Obtener película por ID",
-        "description": "",
-        "produces": [
-          "nosniff"
+        "summary": "Obtener todos los usuarios",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/User"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "tags": [
+          "Users"
         ],
+        "summary": "Obtener usuario por ID",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "type": "integer"
+            "type": "integer",
+            "description": "ID del usuario"
           }
         ],
         "responses": {
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/Movie"
+              "$ref": "#/definitions/User"
             }
-          },
-          "400": {
-            "description": "Bad Request"
           },
           "404": {
             "description": "No encontrado"
-          },
-          "429": {
-            "description": "Too Many Requests"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          }
-        }
-      }
-    },
-    "/movies/": {
-      "get": {
-        "tags": [
-          "Movies"
-        ],
-        "summary": "Obtener todas las películas",
-        "description": "",
-        "produces": [
-          "nosniff"
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "type": {
-                  "type": "string",
-                  "example": "array"
-                },
-                "items": {
-                  "$ref": "#/definitions/Movie"
-                }
-              },
-              "xml": {
-                "name": "main"
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "429": {
-            "description": "Too Many Requests"
-          },
-          "500": {
-            "description": "Internal Server Error"
           }
         }
       }
     }
   },
   "definitions": {
+    "User": {
+      "type": "object",
+      "properties": {
+        "user_id": {
+          "type": "number",
+          "example": 1
+        },
+        "role": {
+          "type": "string",
+          "example": "user"
+        },
+        "full_name": {
+          "type": "string",
+          "example": "Ada Lovelace"
+        },
+        "email": {
+          "type": "string",
+          "example": "ada@example.com"
+        }
+      }
+    },
     "Review": {
       "type": "object",
       "properties": {
@@ -781,45 +461,9 @@
           "type": "number",
           "example": 8.5
         },
-        "has_spoilers": {
-          "type": "boolean",
-          "example": false
-        },
         "body": {
           "type": "string",
           "example": "Excelente..."
-        },
-        "status": {
-          "type": "string",
-          "example": "pending"
-        },
-        "moderated_at": {
-          "type": "string",
-          "example": "2025-01-01T00:00:00Z"
-        },
-        "moderation_label": {
-          "type": "string",
-          "example": "approved"
-        },
-        "moderation_score": {
-          "type": "number",
-          "example": 0.92
-        },
-        "moderation_reason": {
-          "type": "string",
-          "example": "Lenguaje apropiado; sin insultos."
-        },
-        "moderation_source": {
-          "type": "string",
-          "example": "ai"
-        },
-        "created_at": {
-          "type": "string",
-          "example": "2025-01-01T00:00:00Z"
-        },
-        "updated_at": {
-          "type": "string",
-          "example": "2025-01-01T00:00:00Z"
         }
       }
     },
@@ -837,10 +481,6 @@
         "rating": {
           "type": "number",
           "example": 8.5
-        },
-        "has_spoilers": {
-          "type": "boolean",
-          "example": false
         },
         "body": {
           "type": "string",

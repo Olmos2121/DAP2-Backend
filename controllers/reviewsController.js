@@ -1,10 +1,19 @@
-const pool = require("../db");
-const model = require("../models/reviewsModel");
-const {
+import pool from '../db.js';
+import * as model from "../models/reviewsModel.js";
+//import { publishReviewEvent } from '../utils/corePublisher.js';
+/* const model = require("../models/reviewsModel");
+const { publishReviewEvent } = require('../utils/rabbitPublisher'); */
+import { 
+  publishReviewCreated, 
+  publishReviewUpdated, 
+  publishReviewDeleted 
+} from '../utils/corePublisher.js';
+
+import {
   validateReviewData,
   validateCommentData,
   sanitizeInput,
-} = require("../utils/validation");
+} from '../utils/validation.js';
 
 const VALID_SORTS = {
   recent: "r.created_at DESC, r.id DESC",
@@ -61,6 +70,10 @@ async function createReview(req, res) {
     };
 
     const review = await model.createReview(sanitized);
+
+     // Publicar evento al core
+    await publishReviewCreated(review);
+
     res.status(201).json(review);
   } catch (err) {
     const mapped = mapPgErrorToHttp(err);
@@ -78,7 +91,7 @@ async function getReview(req, res) {
   }
 }
 
-async function updateReview(req, res) {
+/* async function updateReview(req, res) {
   try {
     const review = await model.updateReview(req.params.id, req.body);
     if (!review) return res.status(404).json({ error: "Reseña no encontrada" });
@@ -86,9 +99,23 @@ async function updateReview(req, res) {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+} */
+
+async function updateReview(req, res) {
+  try {
+    const review = await model.updateReview(req.params.id, req.body);
+    if (!review) return res.status(404).json({ error: "Reseña no encontrada" });
+    
+     // Publicar evento al core
+    await publishReviewUpdated(review);
+
+    res.json(review);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 }
 
-async function deleteReview(req, res) {
+/* async function deleteReview(req, res) {
   try {
     const deleted = await model.deleteReview(req.params.id);
     if (!deleted)
@@ -98,7 +125,23 @@ async function deleteReview(req, res) {
     const mapped = mapPgErrorToHttp(err);
     res.status(mapped.status).json({ error: mapped.message });
   }
-}
+} */
+
+async function deleteReview(req, res) {
+  try {
+    const deleted = await model.deleteReview(req.params.id);
+    if (!deleted)
+      return res.status(404).json({ error: "Reseña no encontrada" });
+    
+    // Publicar evento al core
+    await publishReviewDeleted(req.params.id);
+
+    res.json({ message: "Reseña eliminada" });
+  } catch (err) {
+    const mapped = mapPgErrorToHttp(err);
+    res.status(mapped.status).json({ error: mapped.message });
+  }
+} 
 
 async function filterReviews(req, res) {
   try {
@@ -267,8 +310,7 @@ async function getComments(req, res) {
 //     res.status(500).json({ error: err.message });
 //   }
 // }
-
-module.exports = {
+export {
   createReview,
   getReview,
   updateReview,
@@ -282,3 +324,4 @@ module.exports = {
   // deleteComment,
   // getStats,
 };
+

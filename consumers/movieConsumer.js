@@ -1,7 +1,9 @@
-const amqp = require('amqplib');
-const pool = require('../db');
+/* const amqp = require('amqplib');
+const pool = require('../db'); */
+import amqp from 'amqplib';
+import pool from '../db.js';
 
-const RABBIT_URL = process.env.RABBIT_URL || 'amqp://localhost';
+const RABBIT_URL = process.env.RABBIT_URL || 'amqp://guest:guest@localhost:5672';
 const QUEUE = 'movies.events';
 
 async function startMovieConsumer() {

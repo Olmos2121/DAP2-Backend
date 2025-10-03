@@ -1,9 +1,9 @@
-const express = require('express');
+import express from 'express';
+import * as controller from '../controllers/moviesController.js';
+
 const router = express.Router();
-const controller = require('../controllers/moviesController');
 
 // CRUD Películas
-
 router.get('/search', 
     /*
       #swagger.tags = ['Movies']
@@ -47,8 +47,5 @@ router.get('/',
     controller.getAllMovies
 );
 
+export default router;
 
-
-
-
-module.exports = router;

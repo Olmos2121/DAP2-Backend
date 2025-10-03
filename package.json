@@ -3,20 +3,15 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "predev": "node swagger.cjs",
     "dev": "node --watch index.js",
     "prestart": "node swagger.cjs",
     "start": "node index.js",
-    "test": "jest",
-    "test:watch": "jest --watchAll",
-    "test:coverage": "jest --coverage"
-  },
-  "jest": {
-    "testEnvironment": "node",
-    "setupFilesAfterEnv": [
-      "<rootDir>/tests/setupTests.js"
-    ]
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --config jest.config.mjs",
+    "test:coverage": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --coverage --runInBand --config jest.config.mjs",
+    "test:clear": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --clearCache"
   },
   "repository": {
     "type": "git",
@@ -30,9 +25,11 @@
   },
   "homepage": "https://github.com/Olmos2121/DAP2-Backend#readme",
   "dependencies": {
+    "amqplib": "^0.10.9",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "node-fetch": "^3.3.2",
     "openai": "^5.20.1",
     "pg": "^8.16.3",
     "swagger-jsdoc": "^6.2.8",

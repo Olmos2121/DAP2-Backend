@@ -84,8 +84,8 @@ function createContentLimiter(req, res, next) {
   
   next();
 }
-
-module.exports = {
+export { rateLimiter, createContentLimiter };
+/* module.exports = {
   rateLimiter,
   createContentLimiter,
-};
+}; */
