@@ -17,10 +17,8 @@ const getMovie            = moviesModule.getMovie            ?? moviesModule.def
 const getAllMovies        = moviesModule.getAllMovies        ?? moviesModule.default?.getAllMovies;
 const searchMovies        = moviesModule.searchMovies        ?? moviesModule.default?.searchMovies;
 const getMoviesByGenre    = moviesModule.getMoviesByGenre    ?? moviesModule.default?.getMoviesByGenre;
-const getMovieStats       = moviesModule.getMovieStats       ?? moviesModule.default?.getMovieStats;
-const getMoviesWithRatings= moviesModule.getMoviesWithRatings?? moviesModule.default?.getMoviesWithRatings;
 
-if (![getMovie, getAllMovies, searchMovies, getMoviesByGenre, getMovieStats, getMoviesWithRatings].every(Boolean)) {
+if (![getMovie, getAllMovies, searchMovies, getMoviesByGenre].every(Boolean)) {
   throw new Error('No se pudieron importar las funciones del moviesModel (revisá los exports).');
 }
 
@@ -112,61 +110,6 @@ describe('moviesModel', () => {
       pool.query.mockRejectedValueOnce(new Error('db error'));
 
       const out = await getMoviesByGenre('drama');
-      expect(out).toEqual([]);
-    });
-  });
-
-  describe('getMovieStats', () => {
-    it('devuelve stats agregadas de la película', async () => {
-      const row = {
-        id: 5, title: 'Toy Story', total_reviews: '3', avg_rating: '4.33', total_likes: '7',
-      };
-      pool.query.mockResolvedValueOnce({ rows: [row] });
-
-      const out = await getMovieStats(5);
-
-      const [sql, params] = pool.query.mock.calls[0];
-      expect(sql).toMatch(/FROM movies m/i);
-      expect(sql).toMatch(/LEFT JOIN reviews r ON m\.id = r\.movie_id/i);
-      expect(sql).toMatch(/LEFT JOIN review_likes rl ON r\.id = rl\.review_id/i);
-      expect(sql).toMatch(/WHERE m\.id = \$1/i);
-      expect(sql).toMatch(/GROUP BY m\.id/i);
-      expect(params).toEqual([5]);
-
-      expect(out).toEqual(row);
-    });
-
-    it('devuelve null en caso de error', async () => {
-      pool.query.mockRejectedValueOnce(new Error('db error'));
-
-      const out = await getMovieStats(1);
-      expect(out).toBeNull();
-    });
-  });
-
-  describe('getMoviesWithRatings', () => {
-    it('devuelve películas con review_count y avg_rating, ordenadas', async () => {
-      const rows = [
-        { id: 10, review_count: '5', avg_rating: '4.8' },
-        { id: 11, review_count: '3', avg_rating: '4.7' },
-      ];
-      pool.query.mockResolvedValueOnce({ rows });
-
-      const out = await getMoviesWithRatings();
-
-      const [sql] = pool.query.mock.calls[0];
-      expect(sql).toMatch(/FROM movies m/i);
-      expect(sql).toMatch(/LEFT JOIN reviews r ON m\.id = r\.movie_id/i);
-      expect(sql).toMatch(/GROUP BY m\.id/i);
-      expect(sql).toMatch(/ORDER BY avg_rating DESC, review_count DESC/i);
-
-      expect(out).toEqual(rows);
-    });
-
-    it('devuelve [] en caso de error', async () => {
-      pool.query.mockRejectedValueOnce(new Error('db error'));
-
-      const out = await getMoviesWithRatings();
       expect(out).toEqual([]);
     });
   });

@@ -1,5 +1,5 @@
 // tests/usersModel.test.js
-import { jest } from '@jest/globals';
+import { afterAll, beforeEach, expect, jest } from '@jest/globals';
 
 // Mock del export default de ../db.js (pool)
 jest.unstable_mockModule('../db.js', () => ({
@@ -20,6 +20,15 @@ if (![getUser, getAllUsers].every(Boolean)) {
   throw new Error('No se pudieron importar getUser/getAllUsers desde models/usersModel.js (revisá exports).');
 }
 
+let consoleErrorSpy;
+beforeEach(() => {
+  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+});
+
+afterAll(() => {
+  consoleErrorSpy.mockRestore();
+});
+
 beforeEach(() => {
   jest.clearAllMocks();
 });
@@ -31,14 +40,18 @@ describe('usersModel', () => {
       pool.query.mockResolvedValueOnce({ rows: [mockUser] });
 
       const user = await getUser(1);
+      expect(pool.query).toHaveBeenCalledWith(
+        'SELECT * FROM users_cache WHERE user_id = $1',
+        [1]
+      );
       expect(user).toEqual(mockUser);
     });
 
-    it('Debe devolver undefined cuando el usuario no existe', async () => {
+    it('Debe devolver null cuando el usuario no existe', async () => {
       pool.query.mockResolvedValueOnce({ rows: [] });
 
       const user = await getUser(-1);
-      expect(user).toBeUndefined();
+      expect(user).toBeNull();
     });
 
     it('Debe manejar errores de la base de datos y devolver null', async () => {
@@ -46,6 +59,7 @@ describe('usersModel', () => {
 
       const user = await getUser(1);
       expect(user).toBeNull();
+      expect(consoleErrorSpy).toHaveBeenCalled();
     });
   });
 
@@ -58,6 +72,9 @@ describe('usersModel', () => {
       pool.query.mockResolvedValueOnce({ rows: mockUsers });
 
       const users = await getAllUsers();
+      expect(pool.query).toHaveBeenCalledWith(
+        'SELECT * FROM users_cache ORDER BY updated_at DESC'
+      );
       expect(users).toEqual(mockUsers);
     });
 
@@ -73,6 +90,7 @@ describe('usersModel', () => {
 
       const users = await getAllUsers();
       expect(users).toEqual([]);
+      expect(consoleErrorSpy).toHaveBeenCalled();
     });
   });
 });
