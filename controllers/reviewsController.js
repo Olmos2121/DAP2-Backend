@@ -1,21 +1,12 @@
-//const pool = require("../db");
 import pool from '../db.js';
 import * as model from "../models/reviewsModel.js";
 import { publishReviewEvent } from '../utils/rabbitPublisher.js';
-/* const model = require("../models/reviewsModel");
-const { publishReviewEvent } = require('../utils/rabbitPublisher'); */
 
 import {
   validateReviewData,
   validateCommentData,
   sanitizeInput,
 } from '../utils/validation.js';
-
-/* const {
-  validateReviewData,
-  validateCommentData,
-  sanitizeInput,
-} = require("../utils/validation"); */
 
 const VALID_SORTS = {
   recent: "r.created_at DESC, r.id DESC",
@@ -56,28 +47,6 @@ function badRequest(res, message) {
   return res.status(400).json({ error: message });
 }
 
-/* async function createReview(req, res) {
-  try {
-    // Validaciones básicas (usás tu utils/validation)
-    const errors = validateReviewData(req.body);
-    if (errors.length > 0)
-      return res
-        .status(400)
-        .json({ error: "Datos inválidos", details: errors });
-
-    const sanitized = {
-      ...req.body,
-      title: sanitizeInput(req.body.title),
-      body: sanitizeInput(req.body.body),
-    };
-
-    const review = await model.createReview(sanitized);
-    res.status(201).json(review);
-  } catch (err) {
-    const mapped = mapPgErrorToHttp(err);
-    res.status(mapped.status).json({ error: mapped.message });
-  }
-} */
 async function createReview(req, res) {
   try {
     // Validaciones básicas (usás tu utils/validation)

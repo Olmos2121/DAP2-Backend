@@ -1,32 +1,18 @@
-//const pool = require('../db');
-import pool from '../db.js';
+// models/usersModel.js
+import pool from "../db.js";
 
-// Funciones para manejo de usuarios con PostgreSQL
-async function getUser(id) {
-  try {
-    const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
-    return result.rows[0];
-  } catch (error) {
-    console.error('Error getting user:', error);
-    return null;
-  }
+export async function getUser(userId) {
+  const r = await pool.query("SELECT * FROM users_cache WHERE user_id = $1", [
+    userId,
+  ]);
+  return r.rows[0] || null;
 }
 
-async function getAllUsers() {
-  try {
-    const result = await pool.query('SELECT * FROM users ORDER BY created_at DESC');
-    return result.rows;
-  } catch (error) {
-    console.error('Error getting all users:', error);
-    return [];
-  }
+export async function getAllUsers() {
+  const r = await pool.query(
+    "SELECT * FROM users_cache ORDER BY updated_at DESC"
+  );
+  return r.rows;
 }
-export default {
-  getUser,
-  getAllUsers,
-  //getUserReviews,
-};
-/* module.exports = {
-  getUser,
-  getAllUsers,
-}; */
+
+export default { getUser, getAllUsers };

@@ -1,4 +1,3 @@
-//const model = require('../models/moviesModel');
 import model from '../models/moviesModel.js';
 
 async function getMovie(req, res) {

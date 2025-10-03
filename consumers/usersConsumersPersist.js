@@ -5,21 +5,13 @@ const { Pool } = pg;
 
 // ====== Config ======
 const RABBIT_URL =
-  process.env.RABBIT_URL || "amqp://guest:guest@localhost:5672";
+  process.env.RABBIT_URL || "amqp://guest:guest@127.0.0.1:5672";
 
-const EX_EVENTS = process.env.USERS_EVENTS_EXCHANGE || "users.events";
-const EX_BROADCAST = process.env.USERS_BROADCAST_EXCHANGE || "users.broadcast";
-const EX_DLX = process.env.USERS_DLX_EXCHANGE || "users.dlx";
+const USERS_QUEUE = process.env.USERS_QUEUE || "reviews.user-events.q"; // <-- cola que te asigna el core
+const DEDUP_CONSUMER_ID = process.env.DEDUP_CONSUMER_ID || "users.consumer";
 
-const Q_SNAPSHOTS = process.env.Q_USERS_SNAPSHOTS || "reviews.user-snapshots.q";
-const Q_BROADCAST = process.env.Q_USERS_BROADCAST || "reviews.broadcast.q";
-const Q_AUTH = process.env.Q_USERS_AUTH || "reviews.auth-cache.q";
-
-const CONSUMER_SNAP = "users.snapshots";
-const CONSUMER_AUTH = "users.auth";
-const CONSUMER_BCAST = "users.broadcast";
-
-const USE_DLX = (process.env.USE_DLX ?? "true").toLowerCase() === "true";
+// const CREATE_QUEUE = (process.env.CREATE_QUEUE || "false").toLowerCase() === "true";
+const CREATE_QUEUE = "true";
 
 // DB
 const pool = new Pool({
@@ -92,205 +84,73 @@ async function upsertUserSnapshot(client, data) {
   );
 }
 
-async function updateRole(client, data) {
-  const role = data.role;
-  const permissions = isAdminOrModerator(role) ? data.permissions ?? [] : null;
+async function applyEvent(client, evt) {
+  const { event, data } = evt;
 
-  await client.query(
-    `
-    INSERT INTO users_cache (user_id, role, permissions, updated_at)
-    VALUES ($1, $2, $3, NOW())
-    ON CONFLICT (user_id) DO UPDATE SET
-      role        = EXCLUDED.role,
-      permissions = EXCLUDED.permissions,
-      updated_at  = NOW()
-    `,
-    [data.user_id, role, permissions]
-  );
-}
+  // si no hay usuario, no hacemos nada
+  if (!data?.user_id) return;
 
-async function updatePermissions(client, data) {
-  const role = data.role; // puede o no venir en el evento
-  if (role && !isAdminOrModerator(role)) {
-    await client.query(
-      `UPDATE users_cache SET permissions = NULL, updated_at = NOW() WHERE user_id = $1`,
-      [data.user_id]
-    );
-    return;
-  }
-
-  await client.query(
-    `
-    UPDATE users_cache
-       SET permissions = $2,
-           updated_at  = NOW()
-     WHERE user_id = $1
-    `,
-    [data.user_id, data.permissions ?? []]
-  );
-}
-
-async function setActive(client, userId, active) {
-  await client.query(
-    `UPDATE users_cache SET is_active = $2, updated_at = NOW() WHERE user_id = $1`,
-    [userId, active]
-  );
-}
-
-async function deleteUser(client, userId) {
-  await client.query(
-    `UPDATE users_cache SET is_active = FALSE, updated_at = NOW() WHERE user_id = $1`,
-    [userId]
-  );
-  // o DELETE si preferís:
-  // await client.query(`DELETE FROM users_cache WHERE user_id = $1`, [userId]);
-}
-
-function parseMsg(msg) {
-  return JSON.parse(msg.content.toString());
-}
-
-// ====== Infra Rabbit ======
-async function assertQueueCompat(ch, queueName, { useDlx = true } = {}) {
-  if (useDlx) {
-    await ch.assertExchange(EX_DLX, "direct", { durable: true });
-    await ch.assertQueue(queueName, {
-      durable: true,
-      arguments: { "x-dead-letter-exchange": EX_DLX },
-    });
-  } else {
-    await ch.assertQueue(queueName, { durable: true });
+  switch (event) {
+    case "user.created":
+    case "user.updated.profile":
+    case "user.updated.role":
+    case "user.updated.permissions":
+    case "user.activated":
+    case "user.deactivated":
+    case "user.deleted":
+      await upsertUserSnapshot(client, data);
+      break;
+    default:
+      break;
   }
 }
 
 async function start() {
+  console.log("AMQP URL:", RABBIT_URL);
+  console.log("Users queue:", USERS_QUEUE, " | createQueue:", CREATE_QUEUE);
+
   const conn = await amqplib.connect(RABBIT_URL);
   const ch = await conn.createChannel();
 
-  // Exchanges base
-  await ch.assertExchange(EX_EVENTS, "topic", { durable: true });
-  await ch.assertExchange(EX_BROADCAST, "fanout", { durable: true });
-  if (USE_DLX) await ch.assertExchange(EX_DLX, "direct", { durable: true });
-
-  // Queues
-  await assertQueueCompat(ch, Q_SNAPSHOTS);
-  await assertQueueCompat(ch, Q_BROADCAST, { useDlx: false });
-  await assertQueueCompat(ch, Q_AUTH);
-
-  // Bindings
-  await ch.bindQueue(Q_SNAPSHOTS, EX_EVENTS, "user.*");
-  await ch.bindQueue(Q_BROADCAST, EX_BROADCAST, "");
-
-  await ch.bindQueue(Q_AUTH, EX_EVENTS, "user.updated.role");
-  await ch.bindQueue(Q_AUTH, EX_EVENTS, "user.updated.permissions");
-  await ch.bindQueue(Q_AUTH, EX_EVENTS, "user.activated");
-  await ch.bindQueue(Q_AUTH, EX_EVENTS, "user.deactivated");
-  // await ch.bindQueue(Q_AUTH, EX_EVENTS, "user.deleted");
+  // NO tocamos exchanges ni bindings; solo aseguramos la cola si nos lo piden
+  if (CREATE_QUEUE) {
+    await ch.assertQueue(USERS_QUEUE, { durable: true });
+  } else {
+    // checkQueue falla si no existe (ayuda a detectar mal config)
+    await ch.checkQueue(USERS_QUEUE);
+  }
 
   ch.prefetch(20);
 
-  // Consumer: snapshots (user.*, creado/perfil/etc.)
-  ch.consume(
-    Q_SNAPSHOTS,
-    async (msg) => {
-      if (!msg) return;
-      try {
-        const evt = parseMsg(msg);
-        const traceId = evt?.meta?.trace_id || null;
-        const data = evt?.data;
-        if (!data?.user_id) throw new Error("Evento sin user_id");
+  ch.consume(USERS_QUEUE, async (msg) => {
+    if (!msg) return;
+    try {
+      const raw = msg.content.toString();
+      const evt = JSON.parse(raw);
 
-        await withTx(async (client) => {
-          const ok = await acquireDedup(client, traceId, CONSUMER_SNAP);
-          if (!ok) return; // ya procesado por ESTE consumer
-          await upsertUserSnapshot(client, data);
-        });
+      // dedup por trace_id (si viene)
+      const traceId = evt?.meta?.trace_id || null;
+      await withTx(async (client) => {
+        const ok = await acquireDedup(client, traceId, DEDUP_CONSUMER_ID);
+        if (!ok) {
+          // ya procesado por ESTE consumer
+          return;
+        }
+        await applyEvent(client, evt);
+      });
 
-        ch.ack(msg);
-      } catch (e) {
-        console.error("Q_SNAPSHOTS error:", e.message);
-        ch.nack(msg, false, false);
-      }
-    },
-    { noAck: false }
-  );
+      ch.ack(msg);
+    } catch (e) {
+      console.error("Users consumer error:", e.message);
+      // rechazamos sin requeue (si core quiere DLX, lo configurará en la cola)
+      ch.nack(msg, false, false);
+    }
+  }, { noAck: false });
 
-  // Consumer: broadcast (jwt.keys.rotated, etc.)
-  ch.consume(
-    Q_BROADCAST,
-    async (msg) => {
-      if (!msg) return;
-      try {
-        const evt = JSON.parse(msg.content.toString());
-        const traceId = evt?.meta?.trace_id || null;
-
-        await withTx(async (client) => {
-          const ok = await acquireDedup(client, traceId, CONSUMER_BCAST);
-          if (!ok) return;
-
-          // Si el evento requiere acción (ej. rotar llaves JWT), hacelo acá.
-          console.log("Broadcast recibido:", evt.event);
-        });
-
-        ch.ack(msg);
-      } catch (e) {
-        console.error("Q_BROADCAST error:", e.message);
-        ch.nack(msg, false, false);
-      }
-    },
-    { noAck: false }
-  );
-
-  // Consumer: cambios de autorización/estado
-  ch.consume(
-    Q_AUTH,
-    async (msg) => {
-      if (!msg) return;
-      try {
-        const evt = parseMsg(msg);
-        const event = evt?.event;
-        const traceId = evt?.meta?.trace_id || null;
-        const data = evt?.data;
-        if (!data?.user_id) throw new Error("Evento sin user_id");
-
-        await withTx(async (client) => {
-          const ok = await acquireDedup(client, traceId, CONSUMER_AUTH);
-          if (!ok) return;
-
-          switch (event) {
-            case "user.updated.role":
-              await updateRole(client, data);
-              break;
-            case "user.updated.permissions":
-              await updatePermissions(client, data);
-              break;
-            case "user.activated":
-              await setActive(client, data.user_id, true);
-              break;
-            case "user.deactivated":
-              await setActive(client, data.user_id, false);
-              break;
-            case "user.deleted":
-              await deleteUser(client, data.user_id);
-              break;
-            default:
-              break;
-          }
-        });
-
-        ch.ack(msg);
-      } catch (e) {
-        console.error("Q_AUTH error:", e.message);
-        ch.nack(msg, false, false);
-      }
-    },
-    { noAck: false }
-  );
-
-  console.log("✅ Consumer iniciado. DLX:", USE_DLX);
+  console.log("✅ Users consumer minimal iniciado.");
 }
 
 start().catch((e) => {
-  console.error("Fatal consumer error:", e);
+  console.error("Fatal users consumer:", e);
   process.exit(1);
 });
