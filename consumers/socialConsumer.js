@@ -24,15 +24,16 @@ async function startLikesConsumer() {
         switch (type) {
           case "like.created":
             await db.query(
-              `INSERT INTO review_likes_cache (like_id, review_id, user_id, created_at, raw_event)
+              `INSERT INTO likes_cache (like_id, review_id, user_id, created_at, raw_event)
                VALUES ($1, $2, $3, $4, $5)
                ON CONFLICT (like_id) DO NOTHING`,
-              [data.id, data.review_id, data.user_id, data.created_at, event]
+              [data.id, data.review_id, data.user_id, data.created_at, JSON.stringify(event)]
+              //[data.id, data.review_id, data.user_id, data.created_at, event]
             );
             break;
 
           case "like.deleted":
-            await db.query(`DELETE FROM review_likes_cache WHERE like_id = $1`, [data.id]);
+            await db.query(`DELETE FROM likes_cache WHERE like_id = $1`, [data.id]);
             break;
 
           default:
