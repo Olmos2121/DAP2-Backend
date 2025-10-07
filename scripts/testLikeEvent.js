@@ -35,7 +35,6 @@ const testEvent = {
     created_at: new Date().toISOString(),
   },
 };
-
 /* const testEvent = {
   id: "test-event-" + Date.now(),
   type: "like.deleted",
@@ -43,11 +42,12 @@ const testEvent = {
   datacontenttype: "application/json",
   sysDate: new Date().toISOString(),
   data: {
-    id: "lk_" + Math.floor(Math.random() * 1000), // ID único del like
-    review_id: 1, // ID de la reseña que querés probar
-    user_id: 3, // ID del usuario
-    created_at: new Date().toISOString(),
+    id: "lk_192", // el MISMO que viste en la tabla likes_cache
+    review_id: 1,
+    user_id: 3,
   },
 }; */
+
+
 
 sendTestEvent(testEvent);
