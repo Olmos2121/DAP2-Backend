@@ -1,1 +1,0 @@
-//Validaciones, autenticación, logs, etc.

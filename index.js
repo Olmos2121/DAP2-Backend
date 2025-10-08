@@ -15,6 +15,7 @@ import { fileURLToPath } from "url";
 import reviewsRoutes from "./routes/reviews.js";
 import usersRoutes from "./routes/users.js";
 import moviesRoutes from "./routes/movies.js";
+import debugRoutes from "./routes/debug.js";
 
 const swaggerFile = JSON.parse(
   await readFile(new URL("./swagger-output.json", import.meta.url))
@@ -96,6 +97,8 @@ app.get("/health", (req, res) => {
     environment: process.env.NODE_ENV || "development",
   });
 });
+
+app.use("/debug", debugRoutes);
 
 // Swagger UI
 app.get("/swagger.json", (req, res) => {
