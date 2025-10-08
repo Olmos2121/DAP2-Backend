@@ -16,6 +16,7 @@ import reviewsRoutes from "./routes/reviews.js";
 import usersRoutes from "./routes/users.js";
 import moviesRoutes from "./routes/movies.js";
 import debugRoutes from "./routes/debug.js";
+import socialRoutes from "./routes/social.js";
 
 const swaggerFile = JSON.parse(
   await readFile(new URL("./swagger-output.json", import.meta.url))
@@ -119,6 +120,7 @@ app.use(
 app.use("/reviews", validateNumericParams, reviewsRoutes);
 app.use("/users", validateNumericParams, usersRoutes);
 app.use("/movies", validateNumericParams, moviesRoutes);
+app.use("/social", validateNumericParams, socialRoutes);
 
 // Aplicar rate limiting adicional a operaciones de creación
 app.use("/reviews", (req, res, next) => {
@@ -136,6 +138,13 @@ app.use("/users", (req, res, next) => {
 });
 
 app.use("/movies", (req, res, next) => {
+  if (req.method === "POST") {
+    return createContentLimiter(req, res, next);
+  }
+  next();
+});
+
+app.use("/social", (req, res, next) => {
   if (req.method === "POST") {
     return createContentLimiter(req, res, next);
   }
