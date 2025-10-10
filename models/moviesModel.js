@@ -1,7 +1,4 @@
-const pool = require('../db');
-
-// Funciones para manejo de películas con PostgreSQL
-
+import pool from '../db.js';
 
 async function getMovie(id) {
   try {
@@ -51,55 +48,9 @@ async function getMoviesByGenre(genre) {
   }
 }
 
-
-
-
-async function getMovieStats(id) {
-  try {
-    const result = await pool.query(
-      `SELECT 
-        m.*,
-        COUNT(r.id) as total_reviews,
-        COALESCE(AVG(r.rating), 0) as avg_rating,
-        COUNT(rl.id) as total_likes
-       FROM movies m
-       LEFT JOIN reviews r ON m.id = r.movie_id
-       LEFT JOIN review_likes rl ON r.id = rl.review_id
-       WHERE m.id = $1
-       GROUP BY m.id`,
-      [id]
-    );
-    return result.rows[0];
-  } catch (error) {
-    console.error('Error getting movie stats:', error);
-    return null;
-  }
-}
-
-async function getMoviesWithRatings() {
-  try {
-    const result = await pool.query(
-      `SELECT 
-        m.*,
-        COUNT(r.id) as review_count,
-        COALESCE(AVG(r.rating), 0) as avg_rating
-       FROM movies m
-       LEFT JOIN reviews r ON m.id = r.movie_id
-       GROUP BY m.id
-       ORDER BY avg_rating DESC, review_count DESC`
-    );
-    return result.rows;
-  } catch (error) {
-    console.error('Error getting movies with ratings:', error);
-    return [];
-  }
-}
-
-module.exports = {
+export default {
   getMovie,
   getAllMovies,
   searchMovies,
   getMoviesByGenre,
-  getMovieStats,
-  getMoviesWithRatings,
 };

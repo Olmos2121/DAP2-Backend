@@ -1,7 +1,9 @@
-const express = require('express');
-const router = express.Router();
-const controller = require('../controllers/userController');
+import express from 'express';
+import * as controller from '../controllers/userController.js';
 
+const router = express.Router();
+
+<<<<<<< HEAD
 // CRUD Usuarios
 router.get('/:id/reviews', 
     /*
@@ -36,3 +38,21 @@ router.get('/',
 
 
 module.exports = router;
+=======
+/*
+  #swagger.operationId = 'getAllUsers'
+  #swagger.tags = ['Users']
+  #swagger.summary = 'Obtener todos los usuarios'
+*/
+router.get('/', controller.getAllUsers);
+
+/*
+  #swagger.operationId = 'getUserById'
+  #swagger.tags = ['Users']
+  #swagger.summary = 'Obtener usuario por ID'
+  #swagger.parameters['id'] = { in: 'path', required: true, type: 'integer' }
+*/
+router.get('/:id', controller.getUser);
+
+export default router;
+>>>>>>> develop

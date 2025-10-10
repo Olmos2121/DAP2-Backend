@@ -1,5 +1,4 @@
-const model = require('../models/moviesModel');
-
+import model from '../models/moviesModel.js';
 
 async function getMovie(req, res) {
   try {
@@ -43,10 +42,4 @@ async function getMoviesByGenre(req, res) {
     res.status(500).json({ error: err.message });
   }
 }
-
-module.exports = {
-  getMovie,
-  getAllMovies,
-  searchMovies,
-  getMoviesByGenre,
-};
+export { getMovie, getAllMovies, searchMovies, getMoviesByGenre };

@@ -1,4 +1,5 @@
-const pool = require("../db");
+//const pool = require("../db");
+import pool from "../db.js";
 const PK = "id";
 
 const COLS = [
@@ -326,17 +327,10 @@ async function filterReviews(filters, options = {}) {
 //     return false;
 //   }
 // }
-
-module.exports = {
+export  {
   createReview,
   getReview,
   updateReview,
   deleteReview,
   filterReviews,
-  // getLikes,
-  // addLike,
-  // removeLike,
-  // getComments,
-  // addComment,
-  // deleteComment,
 };

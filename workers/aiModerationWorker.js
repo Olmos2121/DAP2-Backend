@@ -1,5 +1,7 @@
-const pool = require('../db');
-const OpenAI = require('openai');
+//const pool = require('../db');
+import pool from '../db.js';
+//const OpenAI = require('openai');
+import OpenAI from 'openai';
 //const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 async function callAIForModeration({ body, rating }) {
@@ -84,4 +86,5 @@ function start(intervalMs = 3000) {
   setInterval(() => processOnce().catch(console.error), intervalMs);
 }
 
-module.exports = { start };
+export { start };
+//module.exports = { start };

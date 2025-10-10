@@ -105,7 +105,7 @@ function validatePagination(query) {
   return { limit, offset };
 }
 
-module.exports = {
+export {
   validateUserData,
   validateMovieData,
   validateReviewData,
@@ -114,3 +114,12 @@ module.exports = {
   sanitizeInput,
   validatePagination,
 };
+/* module.exports = {
+  validateUserData,
+  validateMovieData,
+  validateReviewData,
+  validateCommentData,
+  isValidEmail,
+  sanitizeInput,
+  validatePagination,
+}; */

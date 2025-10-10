@@ -1,10 +1,14 @@
-const express = require('express');
+import express from 'express';
+import * as controller from '../controllers/reviewsController.js';
+import { authenticate, requirePermission, requireRole } from '../middlewares/auth.js';
+
 const router = express.Router();
-const controller = require('../controllers/reviewsController');
 
 // CRUD Reseñas
 router.post('/',
-  /* 
+  authenticate(),
+  requirePermission('create:reviews'),
+  /*
     #swagger.tags = ['Reviews']
     #swagger.summary = 'Crear reseña'
     #swagger.description = 'Crea una reseña para una película.'
@@ -53,6 +57,8 @@ router.get('/:id',
 );
 
 router.put('/:id',
+  authenticate(),
+  requirePermission('edit:reviews'),
   /*
     #swagger.tags = ['Reviews']
     #swagger.summary = 'Actualizar reseña'
@@ -70,6 +76,8 @@ router.put('/:id',
 );
 
 router.delete('/:id',
+  authenticate(),
+  requireRole('admin', 'moderator'),
   /*
     #swagger.tags = ['Reviews']
     #swagger.summary = 'Eliminar reseña'
@@ -81,6 +89,7 @@ router.delete('/:id',
   controller.deleteReview
 );
 
+<<<<<<< HEAD
 // Likes y comentarios
 router.get('/:id/likes',
   /*
@@ -105,3 +114,6 @@ router.get('/:id/comments',
 );
 
 module.exports = router;
+=======
+export default router;
+>>>>>>> develop
