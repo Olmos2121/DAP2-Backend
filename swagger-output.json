@@ -1,0 +1,492 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Movie Reviews API",
+    "description": "API para reseñas de películas",
+    "version": "1.0.0"
+  },
+  "host": "localhost:3000",
+  "basePath": "/",
+  "tags": [
+    {
+      "name": "Reviews",
+      "description": "Operaciones sobre reseñas"
+    },
+    {
+      "name": "Users",
+      "description": "Gestión de usuarios"
+    },
+    {
+      "name": "Movies",
+      "description": "Gestión de películas"
+    },
+    {
+      "name": "Health",
+      "description": "Salud del servicio"
+    }
+  ],
+  "schemes": [
+    "http"
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Healthcheck",
+        "description": "Liveness del servicio",
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/swagger.json": {
+      "get": {
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/reviews": {
+      "post": {
+        "tags": [
+          "Reviews"
+        ],
+        "summary": "Crear reseña",
+        "description": "Crea una reseña para una película.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ReviewCreateInput"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Creada",
+            "schema": {
+              "$ref": "#/definitions/Review"
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Movies"
+        ],
+        "summary": "Obtener todas las películas",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "array"
+                },
+                "items": {
+                  "$ref": "#/definitions/Movie"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/reviews/filter": {
+      "get": {
+        "tags": [
+          "Reviews"
+        ],
+        "summary": "Filtrar reseñas",
+        "description": "Filtra reseñas por distintos criterios.",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "movie_id",
+            "in": "query",
+            "type": "integer",
+            "description": "ID de película"
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "type": "integer",
+            "description": "ID de usuario"
+          },
+          {
+            "name": "min_rating",
+            "in": "query",
+            "type": "number"
+          },
+          {
+            "name": "max_rating",
+            "in": "query",
+            "type": "number"
+          },
+          {
+            "name": "has_spoilers",
+            "in": "query",
+            "type": "boolean"
+          },
+          {
+            "name": "genre",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "type": "string",
+            "description": "p.ej. rating_desc, date_asc"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "type": "integer"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "array"
+                },
+                "items": {
+                  "$ref": "#/definitions/Review"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/movies/{id}": {
+      "get": {
+        "tags": [
+          "Movies"
+        ],
+        "summary": "Obtener película por ID",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Movie"
+            }
+          },
+          "404": {
+            "description": "No encontrado"
+          },
+          "default": {
+            "description": ""
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Reviews"
+        ],
+        "summary": "Actualizar reseña",
+        "description": "Actualiza una reseña existente.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/Review"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Review"
+            }
+          },
+          "404": {
+            "description": "No encontrada"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Reviews"
+        ],
+        "summary": "Eliminar reseña",
+        "description": "Elimina una reseña existente.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Sin Contenido"
+          },
+          "404": {
+            "description": "No encontrada"
+          }
+        }
+      }
+    },
+    "/movies/search": {
+      "get": {
+        "tags": [
+          "Movies"
+        ],
+        "summary": "Buscar películas",
+        "description": "Busca películas por título o descripción.",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "array"
+                },
+                "items": {
+                  "$ref": "#/definitions/Movie"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado"
+          }
+        }
+      }
+    },
+    "/movies/genre/{genre}": {
+      "get": {
+        "tags": [
+          "Movies"
+        ],
+        "summary": "Obtener películas por género",
+        "description": "",
+        "parameters": [
+          {
+            "name": "genre",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "example": "array"
+                },
+                "items": {
+                  "$ref": "#/definitions/Movie"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado"
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Obtener todos los usuarios",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/User"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Obtener usuario por ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "description": "ID del usuario"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          "404": {
+            "description": "No encontrado"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "User": {
+      "type": "object",
+      "properties": {
+        "user_id": {
+          "type": "number",
+          "example": 1
+        },
+        "role": {
+          "type": "string",
+          "example": "user"
+        },
+        "full_name": {
+          "type": "string",
+          "example": "Ada Lovelace"
+        },
+        "email": {
+          "type": "string",
+          "example": "ada@example.com"
+        }
+      }
+    },
+    "Review": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "number",
+          "example": 1
+        },
+        "movie_id": {
+          "type": "number",
+          "example": 456
+        },
+        "user_id": {
+          "type": "number",
+          "example": 789
+        },
+        "rating": {
+          "type": "number",
+          "example": 8.5
+        },
+        "body": {
+          "type": "string",
+          "example": "Excelente..."
+        }
+      }
+    },
+    "ReviewCreateInput": {
+      "type": "object",
+      "properties": {
+        "movie_id": {
+          "type": "number",
+          "example": 456
+        },
+        "user_id": {
+          "type": "number",
+          "example": 789
+        },
+        "rating": {
+          "type": "number",
+          "example": 8.5
+        },
+        "body": {
+          "type": "string",
+          "example": "Texto..."
+        }
+      }
+    }
+  }
+}

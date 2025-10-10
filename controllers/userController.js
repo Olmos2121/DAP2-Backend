@@ -67,6 +67,5 @@ export async function getAllUsers(req, res) {
 }
 export default {
   getUser,
-  getUserReviews,
   getAllUsers,
 };

@@ -89,31 +89,4 @@ router.delete('/:id',
   controller.deleteReview
 );
 
-<<<<<<< HEAD
-// Likes y comentarios
-router.get('/:id/likes',
-  /*
-    #swagger.tags = ['Likes']
-    #swagger.summary = 'Obtener likes de reseña'
-    #swagger.parameters['id'] = { in: 'path', required: true, type: 'integer' }
-    #swagger.responses[200] = { description: 'OK', schema: { type: 'array', items: { $ref: '#/definitions/Like' } } }
-    #swagger.responses[404] = { description: 'No encontrada' }
-  */
-  controller.getLikes
-);
-
-router.get('/:id/comments',
-  /*
-    #swagger.tags = ['Comments']
-    #swagger.summary = 'Obtener comentarios de reseña'
-    #swagger.parameters['id'] = { in: 'path', required: true, type: 'integer' }
-    #swagger.responses[200] = { description: 'OK', schema: { type: 'array', items: { $ref: '#/definitions/Comment' } } }
-    #swagger.responses[404] = { description: 'No encontrada' }
-  */
-  controller.getComments
-);
-
-module.exports = router;
-=======
 export default router;
->>>>>>> develop
