@@ -7,7 +7,7 @@ const CORE_URL = "https://webhook.site/77a7edd6-6009-40e4-a9f8-da61e59a574c";
 /**
  * Envía un evento al core
  * @param {string} eventType - Tipo de evento (ej: "review.created")
- * @param {string} routingKey - Routing key (ej: "rating.created")
+ * @param {string} routingKey - Routing key (ej: "reseñas.reseña.creada")
  * @param {object} reviewData - Datos de la reseña
  */
 async function publishReviewEvent(eventType, routingKey, reviewData) {
@@ -39,15 +39,15 @@ async function publishReviewEvent(eventType, routingKey, reviewData) {
 
 // Métodos públicos
 export async function publishReviewCreated(review) {
-  return publishReviewEvent("review.created", "rating.created", review);
+  return publishReviewEvent("reseña.creada", "reseñas.reseña.creada", review);
 }
 
 export async function publishReviewUpdated(review) {
-  return publishReviewEvent("review.updated", "rating.updated", review);
+  return publishReviewEvent("reseña.actualizada", "reseñas.reseña.actualizada", review);
 }
 
 export async function publishReviewDeleted(reviewId) {
-  return publishReviewEvent("review.deleted", "rating.deleted", { id: reviewId });
+  return publishReviewEvent("reseña.eliminada", "reseñas.reseña.eliminada", { id: reviewId });
 }
 
 /* export async function publishReviewCreated(review) {
