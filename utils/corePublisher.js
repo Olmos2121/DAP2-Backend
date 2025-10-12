@@ -39,15 +39,15 @@ async function publishReviewEvent(eventType, routingKey, reviewData) {
 
 // Métodos públicos
 export async function publishReviewCreated(review) {
-  return publishReviewEvent("reseña.creada", "reseñas.reseña.creada", review);
+  return publishReviewEvent("resena.creada", "resenas.resena.creada", review);
 }
 
 export async function publishReviewUpdated(review) {
-  return publishReviewEvent("reseña.actualizada", "reseñas.reseña.actualizada", review);
+  return publishReviewEvent("resena.actualizada", "resenas.resena.actualizada", review);
 }
 
 export async function publishReviewDeleted(reviewId) {
-  return publishReviewEvent("reseña.eliminada", "reseñas.reseña.eliminada", { id: reviewId });
+  return publishReviewEvent("resena.eliminada", "resenas.resena.eliminada", { id: reviewId });
 }
 
 /* export async function publishReviewCreated(review) {
