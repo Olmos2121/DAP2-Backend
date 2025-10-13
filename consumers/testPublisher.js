@@ -21,19 +21,19 @@ const review = {
     await publishReviewCreated(review);
     console.log("✅ publishReviewCreated enviado");
 
-    // 2. Actualizar
-    const updatedReview = {
-      ...review,
-      title: "Una obra maestra del suspenso (editada)",
-      rating: 4,
-      updated_at: new Date().toISOString()
-    };
-    await publishReviewUpdated(updatedReview);
-    console.log("✅ publishReviewUpdated enviado");
+    // // 2. Actualizar
+    // const updatedReview = {
+    //   ...review,
+    //   title: "Una obra maestra del suspenso (editada)",
+    //   rating: 4,
+    //   updated_at: new Date().toISOString()
+    // };
+    // await publishReviewUpdated(updatedReview);
+    // console.log("✅ publishReviewUpdated enviado");
 
-    // 3. Eliminar
-    await publishReviewDeleted(review.id);
-    console.log("✅ publishReviewDeleted enviado");
+    // // 3. Eliminar
+    // await publishReviewDeleted(review.id);
+    // console.log("✅ publishReviewDeleted enviado");
   } catch (err) {
     console.error("❌ Error en pruebas de publicación:", err.message);
   }

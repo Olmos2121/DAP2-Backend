@@ -2,7 +2,7 @@ import fetch from "node-fetch"; // Si usás Node 18+ podés usar global fetch
 import crypto from "crypto";
 
 //const CORE_URL = "http://core-letterboxd.us-east-2.elasticbeanstalk.com/events/receive";
-const CORE_URL = "https://webhook.site/77a7edd6-6009-40e4-a9f8-da61e59a574c";
+const CORE_URL = "https://webhook.site/ab709d2d-5ea1-4325-8c64-c9507f140db4";
 
 /**
  * Envía un evento al core
