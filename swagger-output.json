@@ -21,6 +21,10 @@
       "description": "Gestión de películas"
     },
     {
+      "name": "Social",
+      "description": "Operaciones sociales"
+    },
+    {
       "name": "Health",
       "description": "Salud del servicio"
     }
@@ -292,6 +296,16 @@
         }
       }
     },
+    "/{id}/reviews": {
+      "get": {
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/movies/search": {
       "get": {
         "tags": [
@@ -372,49 +386,22 @@
         }
       }
     },
-    "/users": {
+    "/likes": {
       "get": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Obtener todos los usuarios",
+        "description": "",
         "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/User"
-              }
-            }
+          "default": {
+            "description": ""
           }
         }
       }
     },
-    "/users/{id}": {
+    "/likes/review/{id}": {
       "get": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Obtener usuario por ID",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "integer",
-            "description": "ID del usuario"
-          }
-        ],
+        "description": "",
         "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/User"
-            }
-          },
-          "404": {
-            "description": "No encontrado"
+          "default": {
+            "description": ""
           }
         }
       }

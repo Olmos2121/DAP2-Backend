@@ -10,9 +10,9 @@ async function getMovie(req, res) {
   }
 }
 
-async function getAllMovies(req, res) { //paginar
+async function getAllMovies(req, res) {
   try {
-    const movies = await model.getMoviesWithRatings();
+    const movies = await model.getAllMovies();
     res.json(movies);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -43,10 +43,3 @@ async function getMoviesByGenre(req, res) {
   }
 }
 export { getMovie, getAllMovies, searchMovies, getMoviesByGenre };
-
-/* module.exports = {
-  getMovie,
-  getAllMovies,
-  searchMovies,
-  getMoviesByGenre,
-}; */

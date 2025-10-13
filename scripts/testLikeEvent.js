@@ -30,8 +30,8 @@ const testEvent = {
   sysDate: new Date().toISOString(),
   data: {
     id: "lk_" + Math.floor(Math.random() * 1000), // ID único del like
-    review_id: 1, // ID de la reseña que querés probar
-    user_id: 3, // ID del usuario
+    review_id: 20, // ID de la reseña que querés probar
+    user_id: 1, // ID del usuario
     created_at: new Date().toISOString(),
   },
 };

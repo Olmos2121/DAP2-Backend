@@ -3,7 +3,7 @@ import { publishReviewCreated, publishReviewUpdated, publishReviewDeleted } from
 
 
 const review = {
-  id: 101,
+  id: 104,
   movie_id: 25,
   user_id: 7,
   title: "Una obra maestra del suspenso",
@@ -11,8 +11,8 @@ const review = {
   rating: 5,
   has_spoilers: false,
   tags: ["suspenso", "thriller"],
-  created_at: "2025-09-27T14:32:00Z",
-  updated_at: "2025-09-27T14:32:00Z"
+  created_at: LocalDateNow().toString(),
+  updated_at: LocalDateNow().toString()
 };
 
 (async () => {
@@ -21,19 +21,19 @@ const review = {
     await publishReviewCreated(review);
     console.log("✅ publishReviewCreated enviado");
 
-    // // 2. Actualizar
-    // const updatedReview = {
-    //   ...review,
-    //   title: "Una obra maestra del suspenso (editada)",
-    //   rating: 4,
-    //   updated_at: new Date().toISOString()
-    // };
-    // await publishReviewUpdated(updatedReview);
-    // console.log("✅ publishReviewUpdated enviado");
+    // 2. Actualizar
+    const updatedReview = {
+      ...review,
+      title: "Una obra maestra del suspenso (editada)",
+      rating: 4,
+      updated_at: new Date().toISOString()
+    };
+    await publishReviewUpdated(updatedReview);
+    console.log("✅ publishReviewUpdated enviado");
 
-    // // 3. Eliminar
-    // await publishReviewDeleted(review.id);
-    // console.log("✅ publishReviewDeleted enviado");
+    // 3. Eliminar
+    await publishReviewDeleted(review.id);
+    console.log("✅ publishReviewDeleted enviado");
   } catch (err) {
     console.error("❌ Error en pruebas de publicación:", err.message);
   }
