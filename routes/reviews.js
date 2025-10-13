@@ -22,7 +22,7 @@ router.post('/',
     #swagger.responses[201] = { description: 'Creada', schema: { $ref: '#/definitions/Review' } }
     #swagger.responses[400] = { description: 'Bad Request' }
   */
-  controller.createReview
+  controller.createReview,
 );
 
 router.get('/filter',

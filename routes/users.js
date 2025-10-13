@@ -18,4 +18,12 @@ router.get('/', controller.getAllUsers);
 */
 router.get('/:id', controller.getUser);
 
+/*
+  #swagger.operationId = 'getUserReviews'
+  #swagger.tags = ['Users']
+  #swagger.summary = 'Obtener reseñas de un usuario'
+  #swagger.parameters['id'] = { in: 'path', required: true, type: 'integer' }
+*/
+router.get('/:id/reviews', controller.getUserReviews);
+
 export default router;

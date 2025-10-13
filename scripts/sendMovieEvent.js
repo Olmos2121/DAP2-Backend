@@ -20,7 +20,7 @@ async function sendEvent(event) {
 sendEvent({
   type: 'movie.created',
   movie: {
-    id: 101,
+    id: 102,
     title: 'Pelicula de Prueba',
     description: 'Descripción de prueba',
     release_date: '2025-10-01'

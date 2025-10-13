@@ -3,7 +3,7 @@ import { publishReviewCreated, publishReviewUpdated, publishReviewDeleted } from
 
 
 const review = {
-  id: 101,
+  id: 104,
   movie_id: 25,
   user_id: 7,
   title: "Una obra maestra del suspenso",
@@ -11,8 +11,8 @@ const review = {
   rating: 5,
   has_spoilers: false,
   tags: ["suspenso", "thriller"],
-  created_at: "2025-09-27T14:32:00Z",
-  updated_at: "2025-09-27T14:32:00Z"
+  created_at: LocalDateNow().toString(),
+  updated_at: LocalDateNow().toString()
 };
 
 (async () => {

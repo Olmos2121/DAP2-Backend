@@ -2,7 +2,6 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import "./workers/aiModerationWorker.js";
-import "./consumers/movieConsumer.js";
 
 import { readFile } from "fs/promises";
 
@@ -78,7 +77,6 @@ app.use(cors(corsOptions));
 
 if (process.env.NODE_ENV === "production") {
   app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
     next();
   });
 }
