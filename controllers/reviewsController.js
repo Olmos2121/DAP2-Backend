@@ -1,16 +1,12 @@
-import pool from '../db.js';
+import pool from "../db.js";
 import * as model from "../models/reviewsModel.js";
-import { 
-  publishReviewCreated, 
-  publishReviewUpdated, 
-  publishReviewDeleted 
-} from '../utils/corePublisher.js';
-
 import {
-  validateReviewData,
-  validateCommentData,
-  sanitizeInput,
-} from '../utils/validation.js';
+  publishReviewCreated,
+  publishReviewUpdated,
+  publishReviewDeleted,
+} from "../utils/corePublisher.js";
+
+import { validateReviewData, sanitizeInput } from "../utils/validation.js";
 
 const VALID_SORTS = {
   recent: "r.created_at DESC, r.id DESC",
@@ -53,12 +49,12 @@ function badRequest(res, message) {
 
 async function createReview(req, res) {
   try {
-    // Validaciones básicas (usás tu utils/validation)
     const errors = validateReviewData(req.body);
-    if (errors.length > 0)
+    if (errors.length > 0) {
       return res
         .status(400)
         .json({ error: "Datos inválidos", details: errors });
+    }
 
     const sanitized = {
       ...req.body,
@@ -68,13 +64,14 @@ async function createReview(req, res) {
 
     const review = await model.createReview(sanitized);
 
-     // Publicar evento al core
-    await publishReviewCreated(review);
+    publishReviewCreated(review.id).catch((err) => {
+      console.error("[Eventos] resena.creada fallo:", err.message);
+    });
 
-    res.status(201).json(review);
+    return res.status(201).json(review);
   } catch (err) {
     const mapped = mapPgErrorToHttp(err);
-    res.status(mapped.status).json({ error: mapped.message });
+    return res.status(mapped.status).json({ error: mapped.message });
   }
 }
 
@@ -90,33 +87,39 @@ async function getReview(req, res) {
 
 async function updateReview(req, res) {
   try {
-    const review = await model.updateReview(req.params.id, req.body);
+    const { id } = req.params;
+    const review = await model.updateReview(id, req.body);
     if (!review) return res.status(404).json({ error: "Reseña no encontrada" });
-    
-     // Publicar evento al core
-    await publishReviewUpdated(review);
 
-    res.json(review);
+    // Publicar evento al core (no bloquear)
+    publishReviewUpdated(review.id ?? id).catch((err) => {
+      console.error("[Eventos] resena.actualizada fallo:", err.message);
+    });
+
+    return res.json(review);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 }
 
 async function deleteReview(req, res) {
   try {
-    const deleted = await model.deleteReview(req.params.id);
+    const { id } = req.params;
+    const deleted = await model.deleteReview(id);
     if (!deleted)
       return res.status(404).json({ error: "Reseña no encontrada" });
-    
-    // Publicar evento al core
-    await publishReviewDeleted(req.params.id);
 
-    res.json({ message: "Reseña eliminada" });
+    // Publicar evento al core (no bloquear)
+    publishReviewDeleted(id).catch((err) => {
+      console.error("[Eventos] resena.eliminada fallo:", err.message);
+    });
+
+    return res.json({ message: "Reseña eliminada" });
   } catch (err) {
     const mapped = mapPgErrorToHttp(err);
-    res.status(mapped.status).json({ error: mapped.message });
+    return res.status(mapped.status).json({ error: mapped.message });
   }
-} 
+}
 
 async function filterReviews(req, res) {
   try {
@@ -155,12 +158,11 @@ async function filterReviews(req, res) {
         ? false
         : undefined;
 
-    // Procesar tags si vienen como string
+    // Procesar tags si vienen como string o array
     let tagsArray = [];
     if (tags) {
-      if (Array.isArray(tags)) {
-        tagsArray = tags;
-      } else if (typeof tags === 'string') {
+      if (Array.isArray(tags)) tagsArray = tags;
+      else if (typeof tags === "string") {
         try {
           tagsArray = JSON.parse(tags);
         } catch {
@@ -187,7 +189,7 @@ async function filterReviews(req, res) {
     });
 
     res.set("X-Total-Count", String(total ?? 0));
-    res.json({
+    return res.json({
       total: total ?? 0,
       limit: pageSize,
       offset: pageOffset,
@@ -195,35 +197,8 @@ async function filterReviews(req, res) {
     });
   } catch (err) {
     console.error("filterReviews error:", err);
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 }
 
-async function getLikes(req, res) {
-  try {
-    const likes = await model.getLikes(req.params.id);
-    res.json(likes);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-}
-
-async function getComments(req, res) {
-  try {
-    const comments = await model.getComments(req.params.id);
-    res.json(comments);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-}
-
-export {
-  createReview,
-  getReview,
-  updateReview,
-  deleteReview,
-  filterReviews,
-  getLikes,
-  getComments,
-};
-
+export { createReview, getReview, updateReview, deleteReview, filterReviews };

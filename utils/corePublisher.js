@@ -1,4 +1,4 @@
-import fetch from "node-fetch"; // Si usás Node 18+ podés usar global fetch
+import fetch from "node-fetch";
 import crypto from "crypto";
 
 const CORE_URL = "http://core-letterboxd.us-east-2.elasticbeanstalk.com/events/receive";
@@ -49,17 +49,3 @@ export async function publishReviewUpdated(review_id) {
 export async function publishReviewDeleted(review_id) {
   return publishReviewEvent("resena.eliminada", "resenas.resena.eliminada", { id: review_id });
 }
-
-/* export async function publishReviewCreated(review) {
-  return publishReviewEvent("review.created", "review.created", review);
-}
-
-
-export async function publishReviewUpdated(review) {
-  return publishReviewEvent("review.updated", "review.updated", review);
-}
-
-
-export async function publishReviewDeleted(reviewId) {
-  return publishReviewEvent("review.deleted", "review.deleted", { id: reviewId });
-} */

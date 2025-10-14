@@ -23,7 +23,6 @@ router.post('/',
     #swagger.responses[400] = { description: 'Bad Request' }
   */
   controller.createReview,
-  
 );
 
 router.get('/filter',

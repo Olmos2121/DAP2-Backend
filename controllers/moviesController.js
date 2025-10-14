@@ -2,7 +2,7 @@ import model from '../models/moviesModel.js';
 
 async function getMovie(req, res) {
   try {
-    const movie = await model.getMovieStats(req.params.id);
+    const movie = await model.getMovie(req.params.id);
     if (!movie) return res.status(404).json({ error: 'Película no encontrada' });
     res.json(movie);
   } catch (err) {

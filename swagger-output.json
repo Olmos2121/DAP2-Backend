@@ -25,6 +25,10 @@
       "description": "Operaciones sociales"
     },
     {
+      "name": "Debug",
+      "description": "Operaciones de depuración"
+    },
+    {
       "name": "Health",
       "description": "Salud del servicio"
     }
@@ -94,7 +98,9 @@
             "description": "Bad Request"
           }
         }
-      },
+      }
+    },
+    "/movies": {
       "get": {
         "tags": [
           "Movies"
@@ -237,7 +243,9 @@
             "description": ""
           }
         }
-      },
+      }
+    },
+    "/reviews/{id}": {
       "put": {
         "tags": [
           "Reviews"
@@ -296,9 +304,22 @@
         }
       }
     },
-    "/{id}/reviews": {
+    "/users/{id}/reviews": {
       "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Obtener reseñas de un usuario",
         "description": "",
+        "operationId": "getUserReviews",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer"
+          }
+        ],
         "responses": {
           "default": {
             "description": ""
@@ -386,9 +407,13 @@
         }
       }
     },
-    "/likes": {
+    "/social/likes": {
       "get": {
-        "description": "",
+        "tags": [
+          "Social"
+        ],
+        "summary": "Obtener todos los likes",
+        "description": "Devuelve todos los likes almacenados en la tabla likes_cache.",
         "responses": {
           "default": {
             "description": ""
@@ -396,12 +421,85 @@
         }
       }
     },
-    "/likes/review/{id}": {
+    "/social/likes/review/{id}": {
       "get": {
-        "description": "",
+        "tags": [
+          "Social"
+        ],
+        "summary": "Obtener likes por reseña",
+        "description": "Devuelve los likes asociados a una reseña específica.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "description": "ID de la reseña"
+          }
+        ],
         "responses": {
           "default": {
             "description": ""
+          }
+        }
+      }
+    },
+    "/debug/me": {
+      "get": {
+        "tags": [
+          "Debug"
+        ],
+        "summary": "Quién soy",
+        "description": "Devuelve el usuario que ve el backend (auth + cache).",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Obtener todos los usuarios",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/User"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Obtener usuario por ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          "404": {
+            "description": "No encontrado"
           }
         }
       }

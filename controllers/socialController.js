@@ -6,7 +6,7 @@ import * as model from "../models/socialModel.js";
  */
 export async function getAllLikes(req, res) {
   try {
-    const likes = await model.getAllLikesFromDB();
+    const likes = await model.getAllLikes();
 
     if (!likes || likes.length === 0) {
       return res.status(404).json({ error: "No se encontraron likes registrados." });

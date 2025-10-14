@@ -17,15 +17,32 @@ const doc = {
   basePath: "/",
   tags: [
     { name: "Reviews", description: "Operaciones sobre reseñas" },
-    { name: "Users",   description: "Gestión de usuarios" },
-    { name: "Movies",  description: "Gestión de películas" },
-    { name: "Social",  description: "Operaciones sociales" },
-    { name: "Health",  description: "Salud del servicio" },
+    { name: "Users", description: "Gestión de usuarios" },
+    { name: "Movies", description: "Gestión de películas" },
+    { name: "Social", description: "Operaciones sociales" },
+    { name: "Debug", description: "Operaciones de depuración" },
+    { name: "Health", description: "Salud del servicio" },
   ],
   definitions: {
-    User: { user_id: 1, role: "user", full_name: "Ada Lovelace", email: "ada@example.com" },
-    Review: { id: 1, movie_id: 456, user_id: 789, rating: 8.5, body: "Excelente..." },
-    ReviewCreateInput: { movie_id: 456, user_id: 789, rating: 8.5, body: "Texto..." },
+    User: {
+      user_id: 1,
+      role: "user",
+      full_name: "Ada Lovelace",
+      email: "ada@example.com",
+    },
+    Review: {
+      id: 1,
+      movie_id: 456,
+      user_id: 789,
+      rating: 8.5,
+      body: "Excelente...",
+    },
+    ReviewCreateInput: {
+      movie_id: 456,
+      user_id: 789,
+      rating: 8.5,
+      body: "Texto...",
+    },
   },
 };
 
@@ -38,6 +55,7 @@ const endpointsFiles = [
   path.resolve(__dirname, "routes/users.js"),
   path.resolve(__dirname, "routes/movies.js"),
   path.resolve(__dirname, "routes/social.js"),
+  path.resolve(__dirname, "routes/debug.js"),
 ];
 
 (async () => {
@@ -49,23 +67,23 @@ const endpointsFiles = [
   // Prefijos por tag (de tus app.use)
   const prefByTag = {
     Reviews: "/reviews",
-    Users:   "/users",
-    Movies:  "/movies",
-    Social:  "/social",
-    Health:  "/",        // Health queda tal cual
+    Users: "/users",
+    Movies: "/movies",
+    Social: "/social",
+    Debug: "/debug",
+    Health: "/", // Health queda tal cual
   };
 
   const fixed = addPrefixesByTagSafe(spec, prefByTag);
-  fs.writeFileSync(outputFile, JSON.stringify(fixed, null, 2), "utf8");
-})().catch(err => {
+
+  const withFallbacks = ensureUsersFallback(fixed);
+
+  fs.writeFileSync(outputFile, JSON.stringify(withFallbacks, null, 2), "utf8");
+})().catch((err) => {
   console.error("❌ Error generando Swagger:", err);
   process.exit(1);
 });
 
-/**
- * Agrega prefijo por tag SOLO si el path aún no lo tiene.
- * No toca /swagger.json ni /health.
- */
 function addPrefixesByTagSafe(spec, prefByTag) {
   const oldPaths = spec.paths || {};
   const newPaths = {};
@@ -73,37 +91,82 @@ function addPrefixesByTagSafe(spec, prefByTag) {
 
   for (const rawPath of Object.keys(oldPaths)) {
     const item = oldPaths[rawPath];
-    const methods = Object.keys(item);
+    const methods = Object.keys(item); // get, post, put, delete...
 
     // no tocar estos paths "globales"
     if (rawPath === "/swagger.json" || rawPath === "/health") {
-      newPaths[rawPath] = item;
+      newPaths[rawPath] = Object.assign(newPaths[rawPath] || {}, item);
       continue;
     }
 
-    // tag principal (el primero definido en el método)
-    const firstTag =
-      methods
-        .map(m => (item[m] && Array.isArray(item[m].tags)) ? item[m].tags[0] : null)
-        .find(Boolean) || null;
+    for (const m of methods) {
+      const operation = item[m];
+      // si no hay tags, lo dejamos en el rawPath tal cual
+      const firstTag =
+        operation && Array.isArray(operation.tags) && operation.tags.length
+          ? operation.tags[0]
+          : null;
 
-    let clean = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
+      let clean = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
 
-    // Si ya está prefijado con alguno de los bases conocidos, no tocar
-    const alreadyHasBase = knownBases.some(b => b !== "/" && (clean === b || clean.startsWith(`${b}/`)));
-    if (alreadyHasBase) {
-      newPaths[clean] = { ...(newPaths[clean] || {}), ...item };
-      continue;
+      // Si YA tiene alguno de los prefijos conocidos, no lo toques
+      const alreadyHasBase = knownBases.some(
+        (b) => b !== "/" && (clean === b || clean.startsWith(`${b}/`))
+      );
+
+      let finalPath = clean;
+      if (!alreadyHasBase) {
+        const base = (firstTag && prefByTag[firstTag]) || "";
+        finalPath =
+          base && base !== "/"
+            ? clean === "/"
+              ? base
+              : `${base}${clean}`
+            : clean;
+      }
+
+      // Merge seguro por método
+      newPaths[finalPath] = newPaths[finalPath] || {};
+      newPaths[finalPath][m] = operation;
     }
-
-    const base = prefByTag[firstTag] || "";
-    const finalPath =
-      base && base !== "/"
-        ? (clean === "/" ? base : `${base}${clean}`)
-        : clean;
-
-    newPaths[finalPath] = { ...(newPaths[finalPath] || {}), ...item };
   }
 
   return { ...spec, paths: newPaths };
+}
+
+function ensureUsersFallback(spec) {
+  spec.paths = spec.paths || {};
+
+  if (!spec.paths["/users"]) {
+    spec.paths["/users"] = {
+      get: {
+        tags: ["Users"],
+        summary: "Obtener todos los usuarios",
+        responses: {
+          200: {
+            description: "OK",
+            schema: { type: "array", items: { $ref: "#/definitions/User" } },
+          },
+        },
+      },
+    };
+  }
+
+  if (!spec.paths["/users/{id}"]) {
+    spec.paths["/users/{id}"] = {
+      get: {
+        tags: ["Users"],
+        summary: "Obtener usuario por ID",
+        parameters: [
+          { name: "id", in: "path", required: true, type: "integer" },
+        ],
+        responses: {
+          200: { description: "OK", schema: { $ref: "#/definitions/User" } },
+          404: { description: "No encontrado" },
+        },
+      },
+    };
+  }
+
+  return spec;
 }
