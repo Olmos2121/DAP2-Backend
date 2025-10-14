@@ -15,6 +15,15 @@ const doc = {
   schemes: ["http"],
   host: `localhost:${PORT}`,
   basePath: "/",
+  securityDefinitions: {
+    bearerAuth: {
+      type: "apiKey",
+      name: "Authorization",
+      in: "header",
+      description: "Formato: Bearer <token>",
+    },
+  },
+  security: [{ bearerAuth: [] }],
   tags: [
     { name: "Reviews", description: "Operaciones sobre reseñas" },
     { name: "Users", description: "Gestión de usuarios" },
