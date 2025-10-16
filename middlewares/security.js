@@ -69,18 +69,6 @@ function sanitizeRequest(req, res, next) {
   next();
 }
 
-/* function sanitizeRequest(req, res, next) {
-  if (req.body && typeof req.body === "object") {
-    req.body = sanitizeObject(req.body);
-  }
-
-  if (req.query && typeof req.query === "object") {
-    req.query = sanitizeObject(req.query);
-  }
-  
-
-  next();
-} */
 function sanitizeObject(obj) {
   if (!obj || typeof obj !== "object") {
     return obj;
@@ -112,36 +100,6 @@ function sanitizeObject(obj) {
   return sanitized;
 }
 
-/* function sanitizeObject(obj) {
-  if (!obj || typeof obj !== "object") {
-    return obj;
-  }
-
-  const sanitized = {};
-
-  for (const key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      const value = obj[key];
-
-      if (typeof value === "string") {
-        // Remover HTML/scripts básicos
-        sanitized[key] = value
-          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
-          .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "")
-          .trim();
-      } else if (Array.isArray(value)) {
-        sanitized[key] = value.map((item) =>
-          typeof item === "string" ? item.trim().substring(0, 100) : item
-        );
-      } else {
-        sanitized[key] = value;
-      }
-    }
-  }
-
-  return sanitized;
-} */
-
 // Middleware para verificar Content-Type en POST/PUT
 function validateContentType(req, res, next) {
   if (["POST", "PUT", "PATCH"].includes(req.method)) {
@@ -161,9 +119,4 @@ export {
   sanitizeRequest,
   validateContentType,
 };
-/* module.exports = {
-  securityHeaders,
-  validateNumericParams,
-  sanitizeRequest,
-  validateContentType,
-}; */
+

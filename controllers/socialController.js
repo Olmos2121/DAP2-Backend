@@ -6,7 +6,7 @@ import * as model from "../models/socialModel.js";
  */
 export async function getAllLikes(req, res) {
   try {
-    const likes = await model.getAllLikesFromDB();
+    const likes = await model.getAllLikes();
 
     if (!likes || likes.length === 0) {
       return res.status(404).json({ error: "No se encontraron likes registrados." });
@@ -31,7 +31,7 @@ export async function getLikesByReview(req, res) {
       return res.status(400).json({ error: "El parámetro 'id' debe ser un número válido." });
     }
 
-    const likes = await model.getLikesByReviewFromDB(id);
+    const likes = await model.getLikesByReview(id);
 
     if (!likes || likes.length === 0) {
       return res.status(404).json({ error: `No se encontraron likes para la reseña ${id}.` });

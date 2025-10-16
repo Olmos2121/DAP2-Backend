@@ -2,7 +2,7 @@ import model from '../models/moviesModel.js';
 
 async function getMovie(req, res) {
   try {
-    const movie = await model.getMovieStats(req.params.id);
+    const movie = await model.getMovie(req.params.id);
     if (!movie) return res.status(404).json({ error: 'Película no encontrada' });
     res.json(movie);
   } catch (err) {
@@ -21,12 +21,12 @@ async function getAllMovies(req, res) {
 
 async function searchMovies(req, res) {
   try {
-    const { q } = req.query;
-    if (!q) {
+    const { query } = req.query;
+    if (!query) {
       return res.status(400).json({ error: 'Parámetro de búsqueda requerido' });
     }
-    
-    const movies = await model.searchMovies(q);
+
+    const movies = await model.searchMovies(query);
     res.json(movies);
   } catch (err) {
     res.status(500).json({ error: err.message });
