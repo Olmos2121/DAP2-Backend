@@ -10,6 +10,7 @@ router.post('/',
   requirePermission('create:reviews'),
   /*
     #swagger.tags = ['Reviews']
+    #swagger.security = [{ "bearerAuth": [] }]
     #swagger.summary = 'Crear reseña'
     #swagger.description = 'Crea una reseña para una película.'
     #swagger.consumes = ['application/json']
@@ -61,6 +62,7 @@ router.put('/:id',
   requirePermission('edit:reviews'),
   /*
     #swagger.tags = ['Reviews']
+    #swagger.security = [{ "bearerAuth": [] }]
     #swagger.summary = 'Actualizar reseña'
     #swagger.description = 'Actualiza una reseña existente.'
     #swagger.parameters['id'] = { in: 'path', required: true, type: 'integer' }
@@ -80,6 +82,7 @@ router.delete('/:id',
   requireRole('admin', 'moderator'),
   /*
     #swagger.tags = ['Reviews']
+    #swagger.security = [{ "bearerAuth": [] }]
     #swagger.summary = 'Eliminar reseña'
     #swagger.description = 'Elimina una reseña existente.'
     #swagger.parameters['id'] = { in: 'path', required: true, type: 'integer' }
