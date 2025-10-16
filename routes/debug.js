@@ -4,10 +4,10 @@ import { authenticate } from "../middlewares/auth.js";
 
 const router = express.Router();
 
-router.get(
-  "/me",
+router.get("/me",
   /*
     #swagger.tags = ['Debug']
+    #swagger.security = [{ "bearerAuth": [] }]
     #swagger.summary = 'Quién soy'
     #swagger.description = 'Devuelve el usuario que ve el backend (auth + cache).'
   */

@@ -23,7 +23,6 @@ const doc = {
       description: "Formato: Bearer <token>",
     },
   },
-  security: [{ bearerAuth: [] }],
   tags: [
     { name: "Reviews", description: "Operaciones sobre reseñas" },
     { name: "Users", description: "Gestión de usuarios" },
@@ -57,7 +56,6 @@ const doc = {
 
 const outputFile = path.resolve(__dirname, "swagger-output.json");
 
-// 👇 Incluimos index.js para que tome /health y /swagger.json
 const endpointsFiles = [
   path.resolve(__dirname, "index.js"),
   path.resolve(__dirname, "routes/reviews.js"),
@@ -73,7 +71,6 @@ const endpointsFiles = [
 
   const spec = JSON.parse(fs.readFileSync(outputFile, "utf8"));
 
-  // Prefijos por tag (de tus app.use)
   const prefByTag = {
     Reviews: "/reviews",
     Users: "/users",
