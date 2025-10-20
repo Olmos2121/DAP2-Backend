@@ -5,7 +5,7 @@
     "description": "API para reseñas de películas",
     "version": "1.0.0"
   },
-  "host": "localhost:3000",
+  "host": "localhost:8080",
   "basePath": "/",
   "tags": [
     {
@@ -558,25 +558,31 @@
     "Review": {
       "type": "object",
       "properties": {
-        "id": {
-          "type": "number",
-          "example": 1
-        },
-        "movie_id": {
-          "type": "number",
-          "example": 456
-        },
-        "user_id": {
-          "type": "number",
-          "example": 789
-        },
         "rating": {
           "type": "number",
-          "example": 8.5
+          "example": 4
+        },
+        "title": {
+          "type": "string",
+          "example": "Título opcional"
         },
         "body": {
           "type": "string",
-          "example": "Excelente..."
+          "example": "Este texto debe tener al menos 20 caracteres para ser válido."
+        },
+        "has_spoilers": {
+          "type": "boolean",
+          "example": false
+        },
+        "tags": {
+          "type": "array",
+          "example": [
+            "drama",
+            "classic"
+          ],
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
@@ -585,19 +591,33 @@
       "properties": {
         "movie_id": {
           "type": "number",
-          "example": 456
-        },
-        "user_id": {
-          "type": "number",
-          "example": 789
+          "example": 4
         },
         "rating": {
           "type": "number",
-          "example": 8.5
+          "example": 4
+        },
+        "title": {
+          "type": "string",
+          "example": "Título opcional"
         },
         "body": {
           "type": "string",
-          "example": "Texto..."
+          "example": "Este texto debe tener al menos 20 caracteres para ser válido."
+        },
+        "has_spoilers": {
+          "type": "boolean",
+          "example": false
+        },
+        "tags": {
+          "type": "array",
+          "example": [
+            "drama",
+            "classic"
+          ],
+          "items": {
+            "type": "string"
+          }
         }
       }
     }

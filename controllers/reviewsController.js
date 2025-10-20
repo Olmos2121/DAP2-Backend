@@ -49,6 +49,12 @@ function badRequest(res, message) {
 
 async function createReview(req, res) {
   try {
+    const authUserId = req.user?.user_id;
+
+    if (!authUserId) {
+      return res.status(401).json({ error: "No autorizado" });
+    }
+
     const errors = validateReviewData(req.body);
     if (errors.length > 0) {
       return res
@@ -60,11 +66,12 @@ async function createReview(req, res) {
       ...req.body,
       title: sanitizeInput(req.body.title),
       body: sanitizeInput(req.body.body),
+      user_id: authUserId,
     };
 
     const review = await model.createReview(sanitized);
 
-    publishReviewCreated(review.id).catch((err) => {
+    publishReviewCreated(review).catch((err) => {
       console.error("[Eventos] resena.creada fallo:", err.message);
     });
 
@@ -88,11 +95,18 @@ async function getReview(req, res) {
 async function updateReview(req, res) {
   try {
     const { id } = req.params;
-    const review = await model.updateReview(id, req.body);
-    if (!review) return res.status(404).json({ error: "Reseña no encontrada" });
 
-    // Publicar evento al core (no bloquear)
-    publishReviewUpdated(review.id ?? id).catch((err) => {
+    const current = await model.getReview(id);
+    if (!current) return res.status(404).json({ error: "Reseña no encontrada" });
+
+    const isPrivileged = ["admin", "moderator"].includes(req.user?.role);
+    if (!isPrivileged && current.user_id !== req.user?.userId) {
+      return res.status(403).json({ error: "No autorizado para modificar esta reseña" });
+    }
+    const { user_id, ...rest } = req.body || {};
+    const review = await model.updateReview(id, rest);
+
+    publishReviewUpdated(review).catch((err) => {
       console.error("[Eventos] resena.actualizada fallo:", err.message);
     });
 
@@ -109,7 +123,6 @@ async function deleteReview(req, res) {
     if (!deleted)
       return res.status(404).json({ error: "Reseña no encontrada" });
 
-    // Publicar evento al core (no bloquear)
     publishReviewDeleted(id).catch((err) => {
       console.error("[Eventos] resena.eliminada fallo:", err.message);
     });

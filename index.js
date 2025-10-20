@@ -17,6 +17,8 @@ import moviesRoutes from "./routes/movies.js";
 import debugRoutes from "./routes/debug.js";
 import socialRoutes from "./routes/social.js";
 
+import { startCoreConsumer } from "./consumers/reviewsCoreConsumer.js";
+
 const swaggerFile = JSON.parse(
   await readFile(new URL("./swagger-output.json", import.meta.url))
 );
@@ -31,7 +33,6 @@ import {
   sanitizeRequest,
   validateContentType,
 } from "./middlewares/security.js";
-import { url } from "inspector";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -165,9 +166,20 @@ app.use((req, res) => {
   res.status(404).json({ error: "Ruta no encontrada" });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`✅ Servidor ejecutándose en http://localhost:${PORT}`);
   console.log(`📘 Documentación API: http://localhost:${PORT}/api-docs`);
   console.log(`🔍 Health Check: http://localhost:${PORT}/health`);
   console.log(`🌐 Entorno: ${process.env.NODE_ENV || "development"}`);
+
+  if (process.env.ENABLE_CORE_CONSUMER !== "false") {
+    try {
+      await startCoreConsumer();
+      console.log("🐇 Core consumer iniciado y escuchando eventos del Core");
+    } catch (err) {
+      console.error("❌ No se pudo iniciar el core consumer:", err.message);
+    }
+  } else {
+    console.log("⚠️ Core consumer deshabilitado (ENABLE_CORE_CONSUMER=false)");
+  }
 });
