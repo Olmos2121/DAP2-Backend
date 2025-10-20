@@ -123,10 +123,6 @@ async function filterReviews(filters, options = {}) {
     tags,
     date_range,
   } = filters;
-<<<<<<< HEAD
-=======
-
->>>>>>> develop
   const {
     orderBy: orderClause = "r.created_at DESC, r.id DESC",
     limit: pageLimit,
@@ -138,27 +134,6 @@ async function filterReviews(filters, options = {}) {
     let i = 1;
 
     let sql = `
-<<<<<<< HEAD
-    SELECT
-      ${SELECT_COLUMNS},
-      u.full_name AS user_name,
-      u.image_url AS user_profile_image,
-      m.title AS movie_title,
-      m.poster_url AS movie_poster,
-      m.genre AS movie_genre,
-      COALESCE(l.likes_count, 0) AS likes_count,
-      COUNT(*) OVER() AS total_count
-    FROM reviews r
-    JOIN users_cache u  ON r.user_id  = u.user_id
-    JOIN movies m ON r.movie_id = m.id
-    LEFT JOIN (
-      SELECT review_id, COUNT(*) AS likes_count
-      FROM review_likes
-      GROUP BY review_id
-    ) l ON r.id = l.review_id
-    WHERE 1=1
-  `;
-=======
       SELECT
         ${SELECT_COLUMNS},
         u.full_name  AS user_name,
@@ -178,7 +153,6 @@ async function filterReviews(filters, options = {}) {
       ) l ON r.id = l.review_id
       WHERE 1=1
     `;
->>>>>>> develop
 
     if (movie_id) {
       sql += ` AND r.movie_id = $${i++}`;
@@ -213,23 +187,13 @@ async function filterReviews(filters, options = {}) {
         parts.push(`r.tags @> $${i++}`);
         params.push(JSON.stringify([tag]));
       }
-<<<<<<< HEAD
-      sql += tagConditions.join(" OR ");
-      sql += `)`;
-=======
       sql += parts.join(" OR ") + `)`;
->>>>>>> develop
     }
 
     // date_range sobre r.created_at
     if (date_range) {
       const now = new Date();
-<<<<<<< HEAD
-      let startDate;
-
-=======
       let startDate = null;
->>>>>>> develop
       switch (date_range) {
         case "hoy":
           startDate = new Date(
@@ -249,10 +213,6 @@ async function filterReviews(filters, options = {}) {
           startDate = new Date(now.getFullYear(), 0, 1);
           break;
       }
-<<<<<<< HEAD
-
-=======
->>>>>>> develop
       if (startDate) {
         sql += ` AND r.created_at >= $${i++}`;
         params.push(startDate.toISOString());
