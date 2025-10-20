@@ -1,12 +1,15 @@
-import 'dotenv/config';
-import amqp from 'amqplib';
-import pool from '../db.js';
+import "dotenv/config";
+import amqp from "amqplib";
+import pool from "../db.js";
 
 // =================== Config ===================
 const RABBIT_URL = process.env.RABBIT_MQ_URL;
-const QUEUES = (process.env.CORE_QUEUES || 'core.ratings.queue')
-  .split(',').map(s => s.trim()).filter(Boolean);
-const DEDUP_CONSUMER_ID = process.env.DEDUP_CONSUMER_ID || 'ratings.core-unified';
+const QUEUES = (process.env.CORE_QUEUES || "core.ratings.queue")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+const DEDUP_CONSUMER_ID =
+  process.env.DEDUP_CONSUMER_ID || "ratings.core-unified";
 
 // =================== Helpers ===================
 const toDateOrNull = (v) => (v ? v : null);
@@ -18,10 +21,10 @@ async function handleUsuarioCreado(event) {
   // { evento: 'usuario_creado', idUsuario: 'u123', nombre: 'Juan Pérez', pais:'AR', fechaRegistro:'2025-08-20' }
   const d = event || {};
   const user_id = d.idUsuario;
-  if (!user_id) return 'SKIP_USER_INVALID';
+  if (!user_id) return "SKIP_USER_INVALID";
 
   // no viene email ni image; role por defecto 'user'
-  const role = 'user';
+  const role = "user";
   const permissions = null;
   const is_active = true;
   const full_name = d.nombre || null;
@@ -42,13 +45,13 @@ async function handleUsuarioCreado(event) {
        updated_at  = NOW()`,
     [user_id, role, permissions, is_active, null, null, full_name, null, null]
   );
-  return 'USER_UPSERTED';
+  return "USER_UPSERTED";
 }
 
 // RKs: usuarios.sesion.iniciada / finalizada / anonima  (solo log)
 async function handleUsuarioSesion(_event, routingKey) {
   // Si quisieras persistir sesiones, creá una tabla y hacé upsert aquí
-  return `USER_SESSION_${routingKey.split('.').pop().toUpperCase()}`;
+  return `USER_SESSION_${routingKey.split(".").pop().toUpperCase()}`;
 }
 
 // =================== SOCIAL ===================
@@ -57,34 +60,42 @@ async function handleSocialLike(event, routingKey) {
   // payload:
   // { evento: "like_review", idReview: "r789", idUsuario: "u555", fecha: "2025-08-22" }
   const d = event || {};
-  const like_id = `${routingKey}-${Date.now()}-${Math.random().toString(16).slice(2)}`; // no viene id → generamos
+  const like_id = `${routingKey}-${Date.now()}-${Math.random()
+    .toString(16)
+    .slice(2)}`; // no viene id → generamos
   const review_id = d.idReview;
   const user_id = d.idUsuario;
   const created_at = d.fecha || new Date().toISOString();
 
-  if (!review_id || !user_id) return 'SKIP_LIKE_INVALID';
+  if (!review_id || !user_id) return "SKIP_LIKE_INVALID";
 
-  if (routingKey === 'social.like') {
+  if (routingKey === "social.like") {
     await pool.query(
       `INSERT INTO public.likes_cache (like_id, review_id, user_id, created_at, raw_event)
        VALUES ($1,$2,$3,$4,$5)
        ON CONFLICT (like_id) DO NOTHING`,
-      [like_id, review_id, user_id, created_at, JSON.stringify({ rk:routingKey, d:event })]
+      [
+        like_id,
+        review_id,
+        user_id,
+        created_at,
+        JSON.stringify({ rk: routingKey, d: event }),
+      ]
     );
-    return 'LIKE_CREATED';
+    return "LIKE_CREATED";
   } else {
     // social.unlike → no tenemos like_id original; borramos por (user_id, review_id)
     await pool.query(
       `DELETE FROM public.likes_cache WHERE user_id = $1 AND review_id = $2`,
       [user_id, review_id]
     );
-    return 'LIKE_DELETED';
+    return "LIKE_DELETED";
   }
 }
 
 // Comentarios / Follow / Publicaciones → por ahora solo log
 async function handleSocialOther(_event, routingKey) {
-  return `SOCIAL_${routingKey.replace(/\./g,'_').toUpperCase()}`;
+  return `SOCIAL_${routingKey.replace(/\./g, "_").toUpperCase()}`;
 }
 
 // =================== MOVIES ===================
@@ -103,10 +114,11 @@ function extractMovieFromDataWrapper(evt) {
 }
 
 async function handlePelicula(routingKey, evt) {
-  const { id, title, description, release_date, duration } = extractMovieFromDataWrapper(evt);
+  const { id, title, description, release_date, duration } =
+    extractMovieFromDataWrapper(evt);
 
-  if (routingKey === 'peliculas.creada') {
-    if (!id || !title) return 'SKIP_MOVIE_CREATED_INVALID';
+  if (routingKey === "peliculas.creada") {
+    if (!id || !title) return "SKIP_MOVIE_CREATED_INVALID";
 
     await pool.query(
       `INSERT INTO public.movies (id, title, description, release_date, duration)
@@ -114,11 +126,11 @@ async function handlePelicula(routingKey, evt) {
        ON CONFLICT (id) DO NOTHING`,
       [id, title, description, release_date, duration]
     );
-    return 'MOVIE_CREATED';
+    return "MOVIE_CREATED";
   }
 
-  if (routingKey === 'peliculas.actualizada') {
-    if (!id) return 'SKIP_MOVIE_UPDATED_INVALID';
+  if (routingKey === "peliculas.actualizada") {
+    if (!id) return "SKIP_MOVIE_UPDATED_INVALID";
 
     await pool.query(
       `UPDATE public.movies
@@ -129,57 +141,62 @@ async function handlePelicula(routingKey, evt) {
        WHERE id = $1`,
       [id, title, description, release_date, duration]
     );
-    return 'MOVIE_UPDATED';
+    return "MOVIE_UPDATED";
   }
 
-  if (routingKey === 'peliculas.borrada') {
-    if (!id) return 'SKIP_MOVIE_DELETED_INVALID';
+  if (routingKey === "peliculas.borrada") {
+    if (!id) return "SKIP_MOVIE_DELETED_INVALID";
     await pool.query(`DELETE FROM public.movies WHERE id = $1`, [id]);
-    return 'MOVIE_DELETED';
+    return "MOVIE_DELETED";
   }
 
-  return 'IGNORED_MOVIE';
+  return "IGNORED_MOVIE";
 }
 
 // =================== Router ===================
 async function routeAndHandle(routingKey, payload) {
   // Usuarios
-  if (routingKey === 'usuarios.usuario.creado') {
+  if (routingKey === "usuarios.usuario.creado") {
     return await handleUsuarioCreado(payload);
   }
-  if (routingKey === 'usuarios.sesion.iniciada'
-   || routingKey === 'usuarios.sesion.finalizada'
-   || routingKey === 'usuarios.sesion.anonima') {
+  if (
+    routingKey === "usuarios.sesion.iniciada" ||
+    routingKey === "usuarios.sesion.finalizada" ||
+    routingKey === "usuarios.sesion.anonima"
+  ) {
     return await handleUsuarioSesion(payload, routingKey);
   }
 
   // Social
-  if (routingKey === 'social.like' || routingKey === 'social.unlike') {
+  if (routingKey === "social.like" || routingKey === "social.unlike") {
     return await handleSocialLike(payload, routingKey);
   }
   if (
-    routingKey === 'social.comment.create' || routingKey === 'social.comment.delete' ||
-    routingKey === 'social.follow'         || routingKey === 'social.unfollow'      ||
-    routingKey === 'social.publication.new'|| routingKey === 'social.publication.delete'
+    routingKey === "social.comment.create" ||
+    routingKey === "social.comment.delete" ||
+    routingKey === "social.follow" ||
+    routingKey === "social.unfollow" ||
+    routingKey === "social.publication.new" ||
+    routingKey === "social.publication.delete"
   ) {
     return await handleSocialOther(payload, routingKey);
   }
 
   // Películas
   if (
-    routingKey === 'peliculas.creada' ||
-    routingKey === 'peliculas.actualizada' ||
-    routingKey === 'peliculas.borrada'
+    routingKey === "peliculas.creada" ||
+    routingKey === "peliculas.actualizada" ||
+    routingKey === "peliculas.borrada"
   ) {
     return await handlePelicula(routingKey, payload);
   }
 
-  return `IGNORED_${routingKey.replace(/\./g,'_').toUpperCase()}`;
+  return `IGNORED_${routingKey.replace(/\./g, "_").toUpperCase()}`;
 }
 
 // =================== Runner ===================
 (async function start() {
-  if (!RABBIT_URL) throw new Error('Falta RABBIT_MQ_URL');
+  if (!RABBIT_URL) throw new Error("Falta RABBIT_MQ_URL");
   const conn = await amqp.connect(RABBIT_URL);
 
   for (const q of QUEUES) {
@@ -188,26 +205,87 @@ async function routeAndHandle(routingKey, payload) {
     ch.prefetch(20);
     console.log(`🟢 Escuchando cola "${q}"`);
 
-    ch.consume(q, async (msg) => {
-      if (!msg) return;
-      const rk = msg.fields.routingKey;
-      try {
-        const raw = msg.content.toString();
-        const payload = JSON.parse(raw);
+    ch.consume(
+      q,
+      async (msg) => {
+        if (!msg) return;
+        const rk = msg.fields.routingKey;
+        try {
+          const raw = msg.content.toString();
+          const payload = JSON.parse(raw);
 
-        const res = await routeAndHandle(rk, payload);
-        if (!String(res).startsWith('IGNORED')) {
-          console.log(`✅ ${res} rk=${rk}`);
+          const res = await routeAndHandle(rk, payload);
+          if (!String(res).startsWith("IGNORED")) {
+            console.log(`✅ ${res} rk=${rk}`);
+          }
+          ch.ack(msg);
+        } catch (e) {
+          console.error("❌ Error procesando:", e);
+          ch.nack(msg, false, false);
         }
-        ch.ack(msg);
-      } catch (e) {
-        console.error('❌ Error procesando:', e);
-        ch.nack(msg, false, false);
-      }
-    }, { noAck: false });
+      },
+      { noAck: false }
+    );
   }
 
-  process.on('SIGINT', async () => {
-    try { await conn.close(); } finally { process.exit(0); }
+  process.on("SIGINT", async () => {
+    try {
+      await conn.close();
+    } finally {
+      process.exit(0);
+    }
   });
-})().catch((e) => { console.error('Fatal:', e); process.exit(1); });
+})().catch((e) => {
+  console.error("Fatal:", e);
+  process.exit(1);
+});
+
+// =================== Exported start function ===================
+let _running = false;
+let conn;
+export async function startCoreConsumer() {
+  if (_running) {
+    console.log("⚠️  Core consumer ya estaba corriendo, skip.");
+    return;
+  }
+  _running = true;
+  if (!RABBIT_URL) throw new Error("Falta RABBIT_MQ_URL");
+  conn = await amqp.connect(RABBIT_URL);
+
+  for (const q of QUEUES) {
+    const ch = await conn.createChannel();
+    await ch.checkQueue(q);
+    ch.prefetch(20);
+    console.log(`🟢 Escuchando cola "${q}"`);
+
+    ch.consume(
+      q,
+      async (msg) => {
+        if (!msg) return;
+        const rk = msg.fields.routingKey;
+        try {
+          const raw = msg.content.toString();
+          const payload = JSON.parse(raw);
+
+          const res = await routeAndHandle(rk, payload);
+          if (!String(res).startsWith("IGNORED")) {
+            console.log(`✅ ${res} rk=${rk}`);
+          }
+          ch.ack(msg);
+        } catch (e) {
+          console.error("❌ Error procesando:", e);
+          ch.nack(msg, false, false);
+        }
+      },
+      { noAck: false }
+    );
+  }
+
+  process.on("SIGINT", async () => {
+    try {
+      if (conn) await conn.close();
+    } finally {
+      process.exit(0);
+    }
+  });
+}

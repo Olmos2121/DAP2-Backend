@@ -35,11 +35,12 @@ async function createReview({
       throw new Error("La película especificada no existe");
     }
 
-    const userCheck = await pool.query("SELECT id FROM users WHERE id = $1", [
-      user_id,
-    ]);
+    const userCheck = await pool.query(
+      "SELECT user_id FROM users_cache WHERE user_id = $1",
+      [user_id]
+    );
     if (userCheck.rows.length === 0) {
-      throw new Error("El usuario especificado no existe");
+      throw new Error("El usuario especificado no existe en cache");
     }
 
     const sql = `
@@ -59,9 +60,12 @@ async function createReview({
 async function getReview(id) {
   try {
     const { rows } = await pool.query(
-      `SELECT r.*, u.name AS user_name, m.title AS movie_title
+      `SELECT r.*, 
+      u.full_name AS user_name,
+      u.image_url AS user_profile_image,
+      m.title AS movie_title
        FROM reviews r
-       JOIN users u ON r.user_id = u.id
+       JOIN users_cache u ON r.user_id = u.user_id
        JOIN movies m ON r.movie_id = m.id
        WHERE r.id = $1`,
       [id]
@@ -73,34 +77,20 @@ async function getReview(id) {
   }
 }
 
-async function updateReview(
-  id,
-  { movie_id, user_id, rating, has_spoilers, body, title, tags }
-) {
+async function updateReview(id, { rating, has_spoilers, body, title, tags }) {
   try {
     const sql = `
     UPDATE reviews
-       SET movie_id     = COALESCE($2, movie_id),
-           user_id      = COALESCE($3, user_id),
-           rating       = COALESCE($4, rating),
-           has_spoilers = COALESCE($5, has_spoilers),
-           body         = COALESCE($6, body),
-           title        = COALESCE($7, title),
-           tags         = COALESCE($8, tags),
+       SET rating       = COALESCE($2, rating),
+           has_spoilers = COALESCE($3, has_spoilers),
+           body         = COALESCE($4, body),
+           title        = COALESCE($5, title),
+           tags         = COALESCE($6, tags),
            updated_at   = CURRENT_TIMESTAMP
      WHERE id = $1
     RETURNING ${RETURNING_COLUMNS}
     `;
-    const params = [
-      id,
-      movie_id,
-      user_id,
-      rating,
-      has_spoilers,
-      body,
-      title,
-      tags,
-    ];
+    const params = [id, rating, has_spoilers, body, title, tags];
     const { rows } = await pool.query(sql, params);
     return rows[0] || null;
   } catch (error) {
@@ -123,7 +113,16 @@ async function deleteReview(id) {
 }
 
 async function filterReviews(filters, options = {}) {
-  const { movie_id, user_id, min_rating, max_rating, has_spoilers, genre, tags, date_range } = filters;
+  const {
+    movie_id,
+    user_id,
+    min_rating,
+    max_rating,
+    has_spoilers,
+    genre,
+    tags,
+    date_range,
+  } = filters;
   const {
     orderBy: orderClause = "r.created_at DESC, r.id DESC",
     limit: pageLimit,
@@ -137,15 +136,15 @@ async function filterReviews(filters, options = {}) {
     let sql = `
     SELECT
       ${SELECT_COLUMNS},
-      u.name AS user_name,
-      u.profile_image AS user_profile_image,
+      u.full_name AS user_name,
+      u.image_url AS user_profile_image,
       m.title AS movie_title,
       m.poster_url AS movie_poster,
       m.genre AS movie_genre,
       COALESCE(l.likes_count, 0) AS likes_count,
       COUNT(*) OVER() AS total_count
     FROM reviews r
-    JOIN users u  ON r.user_id  = u.id
+    JOIN users_cache u  ON r.user_id  = u.user_id
     JOIN movies m ON r.movie_id = m.id
     LEFT JOIN (
       SELECT review_id, COUNT(*) AS likes_count
@@ -188,7 +187,7 @@ async function filterReviews(filters, options = {}) {
         tagConditions.push(`r.tags @> $${i++}`);
         params.push(JSON.stringify([tag]));
       }
-      sql += tagConditions.join(' OR ');
+      sql += tagConditions.join(" OR ");
       sql += `)`;
     }
 
@@ -196,25 +195,29 @@ async function filterReviews(filters, options = {}) {
     if (date_range) {
       const now = new Date();
       let startDate;
-      
+
       switch (date_range) {
-        case 'hoy':
-          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        case "hoy":
+          startDate = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate()
+          );
           break;
-        case 'esta-semana':
+        case "esta-semana":
           startDate = new Date(now);
           startDate.setDate(now.getDate() - 7);
           break;
-        case 'este-mes':
+        case "este-mes":
           startDate = new Date(now.getFullYear(), now.getMonth(), 1);
           break;
-        case 'este-año':
+        case "este-año":
           startDate = new Date(now.getFullYear(), 0, 1);
           break;
         default:
           startDate = null;
       }
-      
+
       if (startDate) {
         sql += ` AND r.created_at >= $${i++}`;
         params.push(startDate.toISOString());
@@ -238,10 +241,19 @@ async function filterReviews(filters, options = {}) {
   }
 }
 
-export  {
+async function getReviewOwner(id) {
+  const { rows } = await pool.query(
+    "SELECT user_id FROM reviews WHERE id = $1",
+    [id]
+  );
+  return rows[0] || null;
+}
+
+export {
   createReview,
   getReview,
   updateReview,
   deleteReview,
   filterReviews,
+  getReviewOwner,
 };

@@ -1,13 +1,12 @@
 import express from 'express';
 import * as controller from '../controllers/reviewsController.js';
-import { authenticate, requirePermission, requireRole } from '../middlewares/auth.js';
+import { authenticate, canEditReview, canDeleteReview } from '../middlewares/auth.js';
 
 const router = express.Router();
 
 // CRUD Reseñas
 router.post('/',
   authenticate(),
-  requirePermission('create:reviews'),
   /*
     #swagger.tags = ['Reviews']
     #swagger.security = [{ "bearerAuth": [] }]
@@ -59,7 +58,7 @@ router.get('/:id',
 
 router.put('/:id',
   authenticate(),
-  requirePermission('edit:reviews'),
+  canEditReview(),
   /*
     #swagger.tags = ['Reviews']
     #swagger.security = [{ "bearerAuth": [] }]
@@ -79,7 +78,7 @@ router.put('/:id',
 
 router.delete('/:id',
   authenticate(),
-  requireRole('admin', 'moderator'),
+  canDeleteReview(),
   /*
     #swagger.tags = ['Reviews']
     #swagger.security = [{ "bearerAuth": [] }]

@@ -58,10 +58,6 @@ function validateReviewData(reviewData) {
     errors.push('ID de película inválido');
   }
   
-  if (!reviewData.user_id || !Number.isInteger(Number(reviewData.user_id))) {
-    errors.push('ID de usuario inválido');
-  }
-  
   if (reviewData.tags && (!Array.isArray(reviewData.tags) || reviewData.tags.length > 10)) {
     errors.push('Las etiquetas deben ser un array de máximo 10 elementos');
   }
