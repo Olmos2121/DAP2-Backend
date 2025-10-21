@@ -81,7 +81,6 @@ async function getReview(id) {
     `,
       [id]
     );
-    console.log("getReview - rows:", rows);
     return rows[0] || null;
   } catch (error) {
     console.error("Error getting review:", error);
