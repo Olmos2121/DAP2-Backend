@@ -53,13 +53,18 @@ jobs:
           # Defino el nombre completo de la imagen en una variable para reusarla
           IMAGE_NAME="${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}"
           
+          # --- NUEVO PASO: Iniciar sesión en ECR ---
+          # Obtengo una nueva contraseña de ECR y la uso para hacer login con Docker
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+          # ------------------------------------------
+          
           # Escribo el contenido del secreto DOT_ENV en un archivo .env en el servidor
           echo "${{ secrets.DOT_ENV }}" > ~/backend/backend.env
           
           # Navego a la carpeta de la aplicación
           cd ~/backend
           
-          # Traigo la última imagen de ECR
+          # Traigo la última imagen de ECR (Ahora funcionará)
           docker pull $IMAGE_NAME
           
           # Busco contenedores viejos
