@@ -1,6 +1,13 @@
 // tests/usersModel.test.js
 import { afterAll, beforeEach, expect, jest } from '@jest/globals';
 
+beforeAll(() => {
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+});
+afterAll(() => {
+  console.error.mockRestore();
+});
+
 // Mock del export default de ../db.js (pool)
 jest.unstable_mockModule('../db.js', () => ({
   default: {

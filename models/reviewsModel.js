@@ -156,7 +156,7 @@ async function filterReviews(filters, options = {}) {
         COUNT(*) OVER() AS total_count
       FROM reviews r
       JOIN users_cache u ON r.user_id = u.user_id
-      JOIN movies      m ON r.movie_id = m.id
+      JOIN movies m ON r.movie_id = m.id
       LEFT JOIN (
         SELECT review_id, COUNT(*) AS likes_count
         FROM likes_cache

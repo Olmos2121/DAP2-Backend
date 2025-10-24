@@ -1,6 +1,13 @@
 // tests/reviewsModel.test.js
 import { jest } from '@jest/globals';
 
+beforeAll(() => {
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+});
+afterAll(() => {
+  console.error.mockRestore();
+});
+
 // Mock del export default de ../db.js (pool)
 jest.unstable_mockModule('../db.js', () => ({
   default: {
@@ -55,7 +62,7 @@ describe('reviewsModel', () => {
       });
 
       expect(_query).toHaveBeenNthCalledWith(1, 'SELECT id FROM movies WHERE id = $1', [10]);
-      expect(_query).toHaveBeenNthCalledWith(2, 'SELECT id FROM users WHERE id = $1', [20]);
+      expect(_query).toHaveBeenNthCalledWith(2, 'SELECT user_id FROM users_cache WHERE user_id = $1', [20]);
 
       const thirdCall = _query.mock.calls[2];
       expect(thirdCall[0]).toMatch(/INSERT INTO reviews/i);
@@ -127,7 +134,7 @@ describe('reviewsModel', () => {
 
       expect(sql).toMatch(/UPDATE reviews/i);
       expect(params[0]).toBe(1);   // id
-      expect(params[4]).toBe(true); // has_spoilers
+      expect(params[2]).toBe(true); // has_spoilers
       expect(out).toMatchObject({ id: 1, rating: 4, has_spoilers: true });
     });
 
@@ -184,7 +191,7 @@ describe('reviewsModel', () => {
 
       const [sql, params] = _query.mock.calls[0];
       expect(sql).toMatch(/FROM reviews r/i);
-      expect(sql).toMatch(/JOIN users u/i);
+      expect(sql).toMatch(/JOIN users_cache u/i);
       expect(sql).toMatch(/JOIN movies m/i);
       expect(sql).toMatch(/ORDER BY r\.created_at DESC/i);
       expect(params).toEqual([10, 20, 4, 5, false, '%sci%', 10, 0]);
