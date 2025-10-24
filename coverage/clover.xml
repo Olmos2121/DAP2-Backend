@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1759474552534" clover="3.2.0">
-  <project timestamp="1759474552534" name="All files">
+<coverage generated="1760130194959" clover="3.2.0">
+  <project timestamp="1760130194959" name="All files">
     <metrics statements="122" coveredstatements="115" conditionals="44" coveredconditionals="40" methods="13" coveredmethods="13" elements="179" coveredelements="168" complexity="0" loc="122" ncloc="122" packages="1" files="3" classes="3"/>
     <file name="moviesModel.js" path="D:\Github\DAP2-Backend\models\moviesModel.js">
       <metrics statements="20" coveredstatements="20" conditionals="0" coveredconditionals="0" methods="4" coveredmethods="4"/>

@@ -1,6 +1,13 @@
 // tests/moviesModel.test.js
 import { jest } from '@jest/globals';
 
+beforeAll(() => {
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+});
+afterAll(() => {
+  console.error.mockRestore();
+});
+
 // Mock del export default de ../db.js (pool)
 jest.unstable_mockModule('../db.js', () => ({
   default: {

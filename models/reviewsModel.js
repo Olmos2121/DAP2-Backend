@@ -60,14 +60,25 @@ async function createReview({
 async function getReview(id) {
   try {
     const { rows } = await pool.query(
-      `SELECT r.*, 
-      u.full_name AS user_name,
-      u.image_url AS user_profile_image,
-      m.title AS movie_title
-       FROM reviews r
-       JOIN users_cache u ON r.user_id = u.user_id
-       JOIN movies m ON r.movie_id = m.id
-       WHERE r.id = $1`,
+      `
+      SELECT
+        r.*,
+        u.full_name  AS user_name,
+        u.image_url  AS user_profile_image,
+        m.title      AS movie_title,
+        m.poster_url AS movie_poster,
+        COALESCE(l.likes_count, 0) AS likes_count
+      FROM reviews r
+      LEFT JOIN users_cache u ON r.user_id = u.user_id
+      LEFT JOIN movies      m ON r.movie_id = m.id
+      LEFT JOIN (
+        SELECT review_id, COUNT(*) AS likes_count
+        FROM likes_cache
+        GROUP BY review_id
+      ) l ON r.id = l.review_id
+      WHERE r.id = $1
+      LIMIT 1
+    `,
       [id]
     );
     return rows[0] || null;
@@ -123,7 +134,6 @@ async function filterReviews(filters, options = {}) {
     tags,
     date_range,
   } = filters;
-
   const {
     orderBy: orderClause = "r.created_at DESC, r.id DESC",
     limit: pageLimit,
@@ -146,7 +156,7 @@ async function filterReviews(filters, options = {}) {
         COUNT(*) OVER() AS total_count
       FROM reviews r
       JOIN users_cache u ON r.user_id = u.user_id
-      JOIN movies      m ON r.movie_id = m.id
+      JOIN movies m ON r.movie_id = m.id
       LEFT JOIN (
         SELECT review_id, COUNT(*) AS likes_count
         FROM likes_cache
