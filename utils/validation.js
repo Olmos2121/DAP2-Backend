@@ -45,13 +45,9 @@ function validateReviewData(reviewData) {
   if (!reviewData.title || reviewData.title.trim().length < 5) {
     errors.push('El título debe tener al menos 5 caracteres');
   }
-  
-  if (!reviewData.body || reviewData.body.trim().length < 20) {
-    errors.push('El contenido debe tener al menos 20 caracteres');
-  }
-  
-  if (!reviewData.rating || reviewData.rating <= 0 || reviewData.rating > 5) {
-    errors.push('La calificación debe estar entre 0 y 5');
+
+  if (!reviewData.body || reviewData.body.trim().length < 10) {
+    errors.push('El contenido debe tener al menos 10 caracteres');
   }
   
   if (!reviewData.movie_id || !Number.isInteger(Number(reviewData.movie_id))) {
