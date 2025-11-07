@@ -8,22 +8,16 @@ const QUEUES = (process.env.CORE_QUEUES || "core.ratings.queue")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
-const DEDUP_CONSUMER_ID =
-  process.env.DEDUP_CONSUMER_ID || "ratings.core-unified";
 
 // =================== Helpers ===================
 const toDateOrNull = (v) => (v ? v : null);
 
 // =================== USERS ===================
-// RK: usuarios.usuario.creado (creado o actualizado)
 async function handleUsuarioCreado(event) {
-  // payload:
-  // { evento: 'usuario_creado', idUsuario: 'u123', nombre: 'Juan Pérez', pais:'AR', fechaRegistro:'2025-08-20' }
   const d = event || {};
   const user_id = d.idUsuario;
   if (!user_id) return "SKIP_USER_INVALID";
 
-  // no viene email ni image; role por defecto 'user'
   const role = "user";
   const permissions = null;
   const is_active = true;
@@ -48,28 +42,46 @@ async function handleUsuarioCreado(event) {
   return "USER_UPSERTED";
 }
 
-// RKs: usuarios.sesion.iniciada / finalizada / anonima  (solo log)
 async function handleUsuarioSesion(_event, routingKey) {
-  // Si quisieras persistir sesiones, creá una tabla y hacé upsert aquí
   return `USER_SESSION_${routingKey.split(".").pop().toUpperCase()}`;
 }
 
-// =================== SOCIAL ===================
-// LIKE: social.like   | UNLIKE: social.unlike
+// =================== SOCIAL (ME GUSTA) ===================
+
+function extractLikeIds(d = {}) {
+  const review_id =
+    d.reviewId ??
+    d.idReview ??
+    d.review_id ??
+    d.id_resena ??
+    d.idResena ??
+    d.idPublicacion ??
+    d.publicacionId ??
+    null;
+
+  const user_id =
+    d.userId ??
+    d.idUsuario ??
+    d.user_id ??
+    d.id_usuario ??
+    null;
+
+  return { review_id, user_id };
+}
+
+// Solo guardamos megusta creado/borrado
 async function handleSocialLike(event, routingKey) {
-  // payload:
-  // { evento: "like_review", idReview: "r789", idUsuario: "u555", fecha: "2025-08-22" }
-  const d = event || {};
-  const like_id = `${routingKey}-${Date.now()}-${Math.random()
-    .toString(16)
-    .slice(2)}`; // no viene id → generamos
-  const review_id = d.idReview;
-  const user_id = d.idUsuario;
-  const created_at = d.fecha || new Date().toISOString();
+  const { review_id, user_id } = extractLikeIds(event);
+  const created_at = event?.fecha || new Date().toISOString();
 
-  if (!review_id || !user_id) return "SKIP_LIKE_INVALID";
+  if (!review_id || !user_id) {
+    console.log("⚠️ SKIP_LIKE_INVALID payload=", event);
+    return "SKIP_LIKE_INVALID";
+  }
 
-  if (routingKey === "social.like") {
+  const like_id = `${review_id}-${user_id}`; // 1 like por (review, user)
+
+  if (routingKey === "social.megusta.creado") {
     await pool.query(
       `INSERT INTO public.likes_cache (like_id, review_id, user_id, created_at, raw_event)
        VALUES ($1,$2,$3,$4,$5)
@@ -83,69 +95,133 @@ async function handleSocialLike(event, routingKey) {
       ]
     );
     return "LIKE_CREATED";
-  } else {
-    // social.unlike → no tenemos like_id original; borramos por (user_id, review_id)
+  }
+
+  if (routingKey === "social.megusta.borrado") {
     await pool.query(
-      `DELETE FROM public.likes_cache WHERE user_id = $1 AND review_id = $2`,
-      [user_id, review_id]
+      `DELETE FROM public.likes_cache WHERE like_id = $1`,
+      [like_id]
     );
     return "LIKE_DELETED";
   }
-}
 
-// Comentarios / Follow / Publicaciones → por ahora solo log
-async function handleSocialOther(_event, routingKey) {
-  return `SOCIAL_${routingKey.replace(/\./g, "_").toUpperCase()}`;
+  return "IGNORED_SOCIAL";
 }
 
 // =================== MOVIES ===================
-// RKs: peliculas.creada / peliculas.actualizada / peliculas.borrada
+
 function extractMovieFromDataWrapper(evt) {
-  // evento de películas viene con wrapper tipo cloud event:
-  // { id, data:{ id, titulo, sinopsis, fechaEstreno, duracionMinutos, ... }, type:'peliculas.creada', ... }
   const data = evt?.data || {};
+
+  const releaseDate = data.fechaEstreno || null;
+  const year = releaseDate ? Number(String(releaseDate).slice(0, 4)) : null;
+
+  const genre =
+    Array.isArray(data.generos) && data.generos.length
+      ? data.generos.map((g) => g.nombre).join(", ")
+      : null;
+
+  const directorName = data.director?.nombre || null;
+
   return {
     id: data.id ?? null,
     title: data.titulo ?? null,
     description: data.sinopsis ?? null,
-    release_date: toDateOrNull(data.fechaEstreno) ?? null,
+    release_date: toDateOrNull(releaseDate),
+    year,
+    genre,
+    director: directorName,
     duration: data.duracionMinutos ?? null,
+    poster_url: data.poster ?? null,
   };
 }
 
 async function handlePelicula(routingKey, evt) {
-  const { id, title, description, release_date, duration } =
-    extractMovieFromDataWrapper(evt);
+  const m = extractMovieFromDataWrapper(evt);
+  const {
+    id,
+    title,
+    description,
+    release_date,
+    year,
+    genre,
+    director,
+    duration,
+    poster_url,
+  } = m;
 
-  if (routingKey === "peliculas.creada") {
-    if (!id || !title) return "SKIP_MOVIE_CREATED_INVALID";
+  if (routingKey === "peliculas.pelicula.creada") {
+    if (!id || !title) {
+      console.log("⚠️ SKIP_MOVIE_CREATED_INVALID payload=", evt);
+      return "SKIP_MOVIE_CREATED_INVALID";
+    }
 
     await pool.query(
-      `INSERT INTO public.movies (id, title, description, release_date, duration)
-       VALUES ($1,$2,$3,$4,$5)
-       ON CONFLICT (id) DO NOTHING`,
-      [id, title, description, release_date, duration]
+      `INSERT INTO public.movies
+        (id, title, year, genre, director, duration, poster_url, description, release_date)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+       ON CONFLICT (id) DO UPDATE SET
+         title        = EXCLUDED.title,
+         year         = EXCLUDED.year,
+         genre        = EXCLUDED.genre,
+         director     = EXCLUDED.director,
+         duration     = EXCLUDED.duration,
+         poster_url   = EXCLUDED.poster_url,
+         description  = EXCLUDED.description,
+         release_date = EXCLUDED.release_date`,
+      [
+        id,
+        title,
+        year,
+        genre,
+        director,
+        duration,
+        poster_url,
+        description,
+        release_date,
+      ]
     );
     return "MOVIE_CREATED";
   }
 
-  if (routingKey === "peliculas.actualizada") {
-    if (!id) return "SKIP_MOVIE_UPDATED_INVALID";
+  if (routingKey === "peliculas.pelicula.actualizada") {
+    if (!id) {
+      console.log("⚠️ SKIP_MOVIE_UPDATED_INVALID payload=", evt);
+      return "SKIP_MOVIE_UPDATED_INVALID";
+    }
 
     await pool.query(
       `UPDATE public.movies
-         SET title        = COALESCE($2, title),
-             description  = COALESCE($3, description),
-             release_date = COALESCE($4, release_date),
-             duration     = COALESCE($5, duration)
+         SET
+           title        = COALESCE($2, title),
+           year         = COALESCE($3, year),
+           genre        = COALESCE($4, genre),
+           director     = COALESCE($5, director),
+           duration     = COALESCE($6, duration),
+           poster_url   = COALESCE($7, poster_url),
+           description  = COALESCE($8, description),
+           release_date = COALESCE($9, release_date)
        WHERE id = $1`,
-      [id, title, description, release_date, duration]
+      [
+        id,
+        title,
+        year,
+        genre,
+        director,
+        duration,
+        poster_url,
+        description,
+        release_date,
+      ]
     );
     return "MOVIE_UPDATED";
   }
 
-  if (routingKey === "peliculas.borrada") {
-    if (!id) return "SKIP_MOVIE_DELETED_INVALID";
+  if (routingKey === "peliculas.pelicula.borrada") {
+    if (!id) {
+      console.log("⚠️ SKIP_MOVIE_DELETED_INVALID payload=", evt);
+      return "SKIP_MOVIE_DELETED_INVALID";
+    }
     await pool.query(`DELETE FROM public.movies WHERE id = $1`, [id]);
     return "MOVIE_DELETED";
   }
@@ -167,26 +243,22 @@ async function routeAndHandle(routingKey, payload) {
     return await handleUsuarioSesion(payload, routingKey);
   }
 
-  // Social
-  if (routingKey === "social.like" || routingKey === "social.unlike") {
+  // Social: solo megusta creado/borrado
+  if (
+    routingKey === "social.megusta.creado" ||
+    routingKey === "social.megusta.borrado"
+  ) {
     return await handleSocialLike(payload, routingKey);
   }
-  if (
-    routingKey === "social.comment.create" ||
-    routingKey === "social.comment.delete" ||
-    routingKey === "social.follow" ||
-    routingKey === "social.unfollow" ||
-    routingKey === "social.publication.new" ||
-    routingKey === "social.publication.delete"
-  ) {
-    return await handleSocialOther(payload, routingKey);
+  if (routingKey.startsWith("social.")) {
+    return `IGNORED_SOCIAL_${routingKey.replace(/\./g, "_").toUpperCase()}`;
   }
 
   // Películas
   if (
-    routingKey === "peliculas.creada" ||
-    routingKey === "peliculas.actualizada" ||
-    routingKey === "peliculas.borrada"
+    routingKey === "peliculas.pelicula.creada" ||
+    routingKey === "peliculas.pelicula.actualizada" ||
+    routingKey === "peliculas.pelicula.borrada"
   ) {
     return await handlePelicula(routingKey, payload);
   }
@@ -194,62 +266,18 @@ async function routeAndHandle(routingKey, payload) {
   return `IGNORED_${routingKey.replace(/\./g, "_").toUpperCase()}`;
 }
 
-// =================== Runner ===================
-(async function start() {
-  if (!RABBIT_URL) throw new Error("Falta RABBIT_MQ_URL");
-  const conn = await amqp.connect(RABBIT_URL);
-
-  for (const q of QUEUES) {
-    const ch = await conn.createChannel();
-    await ch.checkQueue(q);
-    ch.prefetch(20);
-    console.log(`🟢 Escuchando cola "${q}"`);
-
-    ch.consume(
-      q,
-      async (msg) => {
-        if (!msg) return;
-        const rk = msg.fields.routingKey;
-        try {
-          const raw = msg.content.toString();
-          const payload = JSON.parse(raw);
-
-          const res = await routeAndHandle(rk, payload);
-          if (!String(res).startsWith("IGNORED")) {
-            console.log(`✅ ${res} rk=${rk}`);
-          }
-          ch.ack(msg);
-        } catch (e) {
-          console.error("❌ Error procesando:", e);
-          ch.nack(msg, false, false);
-        }
-      },
-      { noAck: false }
-    );
-  }
-
-  process.on("SIGINT", async () => {
-    try {
-      await conn.close();
-    } finally {
-      process.exit(0);
-    }
-  });
-})().catch((e) => {
-  console.error("Fatal:", e);
-  process.exit(1);
-});
-
-// =================== Exported start function ===================
+// =================== Exported Runner ===================
 let _running = false;
 let conn;
+
 export async function startCoreConsumer() {
   if (_running) {
-    console.log("⚠️  Core consumer ya estaba corriendo, skip.");
+    console.log("⚠️ Core consumer ya estaba corriendo, skip.");
     return;
   }
-  _running = true;
   if (!RABBIT_URL) throw new Error("Falta RABBIT_MQ_URL");
+  _running = true;
+
   conn = await amqp.connect(RABBIT_URL);
 
   for (const q of QUEUES) {
@@ -268,13 +296,11 @@ export async function startCoreConsumer() {
           const payload = JSON.parse(raw);
 
           const res = await routeAndHandle(rk, payload);
-          if (!String(res).startsWith("IGNORED")) {
-            console.log(`✅ ${res} rk=${rk}`);
-          }
+          console.log(`[${rk}] -> ${res}`);
           ch.ack(msg);
         } catch (e) {
           console.error("❌ Error procesando:", e);
-          ch.nack(msg, false, false);
+          ch.nack(msg, false, false); // no requeue mensajes rotos
         }
       },
       { noAck: false }
@@ -288,4 +314,6 @@ export async function startCoreConsumer() {
       process.exit(0);
     }
   });
+
+  console.log("🐇 Core consumer iniciado y escuchando eventos del Core");
 }
