@@ -24,18 +24,18 @@ async function handleUsuarioCreado(event) {
   const full_name = d.nombre || null;
 
   await pool.query(
-    `INSERT INTO public.users_cache
+    `INSERT INTO users_cache
       (user_id, role, permissions, is_active, name, last_name, full_name, email, image_url, updated_at)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW())
      ON CONFLICT (user_id) DO UPDATE SET
        role        = EXCLUDED.role,
        permissions = EXCLUDED.permissions,
-       is_active   = COALESCE(EXCLUDED.is_active, public.users_cache.is_active),
-       name        = COALESCE(EXCLUDED.name, public.users_cache.name),
-       last_name   = COALESCE(EXCLUDED.last_name, public.users_cache.last_name),
-       full_name   = COALESCE(EXCLUDED.full_name, public.users_cache.full_name),
-       email       = COALESCE(EXCLUDED.email, public.users_cache.email),
-       image_url   = COALESCE(EXCLUDED.image_url, public.users_cache.image_url),
+       is_active   = COALESCE(EXCLUDED.is_active, users_cache.is_active),
+       name        = COALESCE(EXCLUDED.name, users_cache.name),
+       last_name   = COALESCE(EXCLUDED.last_name, users_cache.last_name),
+       full_name   = COALESCE(EXCLUDED.full_name, users_cache.full_name),
+       email       = COALESCE(EXCLUDED.email, users_cache.email),
+       image_url   = COALESCE(EXCLUDED.image_url, users_cache.image_url),
        updated_at  = NOW()`,
     [user_id, role, permissions, is_active, null, null, full_name, null, null]
   );
@@ -48,8 +48,9 @@ async function handleUsuarioSesion(_event, routingKey) {
 
 // =================== SOCIAL (ME GUSTA) ===================
 
-function extractLikeIds(d = {}) {
-  const review_id =
+// Obtenemos SOLO el review_id con nombres tolerantes
+function extractReviewId(d = {}) {
+  return (
     d.reviewId ??
     d.idReview ??
     d.review_id ??
@@ -57,50 +58,43 @@ function extractLikeIds(d = {}) {
     d.idResena ??
     d.idPublicacion ??
     d.publicacionId ??
-    null;
-
-  const user_id =
-    d.userId ??
-    d.idUsuario ??
-    d.user_id ??
-    d.id_usuario ??
-    null;
-
-  return { review_id, user_id };
+    null
+  );
 }
 
-// Solo guardamos megusta creado/borrado
+// Solo guardamos megusta creado/borrado usando review_id
 async function handleSocialLike(event, routingKey) {
-  const { review_id, user_id } = extractLikeIds(event);
+  const review_id = extractReviewId(event);
   const created_at = event?.fecha || new Date().toISOString();
 
-  if (!review_id || !user_id) {
-    console.log("⚠️ SKIP_LIKE_INVALID payload=", event);
+  if (!review_id) {
+    console.log("⚠️ SKIP_LIKE_INVALID (sin review_id) payload=", event);
     return "SKIP_LIKE_INVALID";
   }
 
-  const like_id = `${review_id}-${user_id}`; // 1 like por (review, user)
-
   if (routingKey === "social.megusta.creado") {
+    // Insertamos un registro de like para esa review
     await pool.query(
-      `INSERT INTO public.likes_cache (like_id, review_id, user_id, created_at, raw_event)
-       VALUES ($1,$2,$3,$4,$5)
-       ON CONFLICT (like_id) DO NOTHING`,
-      [
-        like_id,
-        review_id,
-        user_id,
-        created_at,
-        JSON.stringify({ rk: routingKey, d: event }),
-      ]
+      `INSERT INTO likes_cache (review_id, created_at, raw_event)
+       VALUES ($1, $2, $3)`,
+      [review_id, created_at, JSON.stringify({ rk: routingKey, d: event })]
     );
     return "LIKE_CREATED";
   }
 
   if (routingKey === "social.megusta.borrado") {
+    // Borramos UN like asociado a esa review usando solo SQL
+    // (el más reciente, por ejemplo)
     await pool.query(
-      `DELETE FROM public.likes_cache WHERE like_id = $1`,
-      [like_id]
+      `DELETE FROM likes_cache
+       WHERE ctid IN (
+         SELECT ctid
+         FROM likes_cache
+         WHERE review_id = $1
+         ORDER BY created_at DESC
+         LIMIT 1
+       )`,
+      [review_id]
     );
     return "LIKE_DELETED";
   }
@@ -157,7 +151,7 @@ async function handlePelicula(routingKey, evt) {
     }
 
     await pool.query(
-      `INSERT INTO public.movies
+      `INSERT INTO movies
         (id, title, year, genre, director, duration, poster_url, description, release_date)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
        ON CONFLICT (id) DO UPDATE SET
@@ -191,7 +185,7 @@ async function handlePelicula(routingKey, evt) {
     }
 
     await pool.query(
-      `UPDATE public.movies
+      `UPDATE movies
          SET
            title        = COALESCE($2, title),
            year         = COALESCE($3, year),
@@ -222,7 +216,7 @@ async function handlePelicula(routingKey, evt) {
       console.log("⚠️ SKIP_MOVIE_DELETED_INVALID payload=", evt);
       return "SKIP_MOVIE_DELETED_INVALID";
     }
-    await pool.query(`DELETE FROM public.movies WHERE id = $1`, [id]);
+    await pool.query(`DELETE FROM movies WHERE id = $1`, [id]);
     return "MOVIE_DELETED";
   }
 
