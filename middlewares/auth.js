@@ -118,10 +118,15 @@ export function authenticate() {
 
       req.user = normalized;
 
+      console.log("comienzo");
+
       // Guardá/actualizá el cache en segundo plano (no bloqueante)
       upsertUsersCache(normalized).catch((err) =>
+        console.log("haciendo upsert"),
         console.warn("[users_cache upsert] non-blocking error:", err.message)
       );
+
+      console.log("fin");
 
       return next();
     } catch (err) {
