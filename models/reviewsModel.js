@@ -50,6 +50,9 @@ async function createReview({
     `;
     const params = [movie_id, user_id, rating, has_spoilers, body, title, tags];
     const { rows } = await pool.query(sql, params);
+
+    console.log("Created review with ID:", rows[0].id);
+
     return rows[0];
   } catch (error) {
     console.error("Error creating review:", error);

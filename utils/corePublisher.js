@@ -38,13 +38,16 @@ async function publishReviewEvent(eventType, routingKey, reviewData) {
 
 // Métodos públicos
 export async function publishReviewCreated(review) {
+  console.log("Publicando evento de creación de reseña:", review);
   return publishReviewEvent("resena.creada", "resenas.resena.creada", review);
 }
 
 export async function publishReviewUpdated(review) {
+  console.log("Publicando evento de actualización de reseña:", review);
   return publishReviewEvent("resena.actualizada", "resenas.resena.actualizada", review);
 }
 
 export async function publishReviewDeleted(id) {
+  console.log("Publicando evento de eliminación de reseña:", id);
   return publishReviewEvent("resena.eliminada", "resenas.resena.eliminada", { id });
 }

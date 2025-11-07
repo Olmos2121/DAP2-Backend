@@ -71,6 +71,8 @@ async function createReview(req, res) {
 
     const review = await model.createReview(sanitized);
 
+    console.log("Review created:", review);
+
     publishReviewCreated(review).catch((err) => {
       console.error("[Eventos] resena.creada fallo:", err.message);
     });
