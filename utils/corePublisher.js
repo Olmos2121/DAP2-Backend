@@ -1,13 +1,21 @@
 import fetch from "node-fetch";
 import crypto from "crypto";
 
+// =================== CONFIG ===================
 const CORE_URL =
   process.env.CORE_URL ||
   "http://core-letterboxd.us-east-2.elasticbeanstalk.com/events/receive";
 
+const CORE_API_KEY = process.env.CORE_API_KEY || null;
+
+if (!CORE_API_KEY) {
+  console.warn("⚠️  CORE_API_KEY no configurada. El Core rechazará los eventos (401).");
+}
+
+// =================== HELPERS ===================
 /**
- * sysDate en formato [year, month, day, hour, minute, second, nanos]
- * igual al que usa el Core.
+ * Devuelve sysDate en el formato que usa el Core:
+ * [YYYY, MM, DD, hh, mm, ss, nanos]
  */
 function buildSysDate() {
   const now = new Date();
@@ -23,46 +31,42 @@ function buildSysDate() {
 }
 
 /**
- * Envía evento al Core:
- * - type = routingKey
- * - query ?routingKey=<routingKey>
- * - data = payload de acuerdo al contrato que definiste
+ * Envia un evento al Core.
+ * @param {string} routingKey - ej: "resenas.resena.creada"
+ * @param {object} data - contenido del evento según contrato
  */
 async function publishReviewEvent(routingKey, data) {
   const event = {
     id: crypto.randomUUID(),
     type: routingKey,
-    source: "/reviews/api",
+    source: "/ratings/api",
     datacontenttype: "application/json",
     sysDate: buildSysDate(),
-    data, // 👈 acá va el JSON de tu contrato (con "event": "resena_creada", etc.)
+    data,
   };
 
   const url = `${CORE_URL}?routingKey=${encodeURIComponent(routingKey)}`;
-
-  console.log("➡️ Enviando evento al core");
-  console.log("   RK:", routingKey);
-  console.log("   URL:", url);
-  console.log("   Body:", JSON.stringify(event));
 
   let response;
   try {
     response = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-KEY": CORE_API_KEY || "",
+      },
       body: JSON.stringify(event),
     });
   } catch (err) {
-    console.error("❌ Error de red al enviar evento al core:", err);
+    console.error("❌ Error de red al enviar evento al Core:", err);
     throw err;
   }
 
   const text = await response.text().catch(() => "");
-  console.log("⬅️ Respuesta core:", response.status, text);
 
   if (!response.ok) {
     throw new Error(
-      `Error enviando evento al core (${routingKey}): ${response.status} - ${text}`
+      `Error enviando evento al Core: ${response.status} - ${text}`
     );
   }
 
@@ -73,12 +77,15 @@ async function publishReviewEvent(routingKey, data) {
   }
 }
 
-// ================= PUBLICADOS SEGÚN TU CONTRATO =================
+// =================== PUBLISHERS SEGÚN CONTRATO ===================
 
+/**
+ * Crear reseña
+ * Routing Key: resenas.resena.creada
+ */
 export async function publishReviewCreated(review) {
-  // review viene de la DB con los campos correctos
+  console.log("entro al publisher")
   const routingKey = "resenas.resena.creada";
-
   const payload = {
     event: "resena_creada",
     id: review.id,
@@ -89,15 +96,19 @@ export async function publishReviewCreated(review) {
     rating: review.rating,
     has_spoilers: review.has_spoilers,
     tags: review.tags,
-    created_at: review.created_at, // viene del RETURNING
+    created_at: review.created_at,
   };
 
+  console.log("antes del return");
   return publishReviewEvent(routingKey, payload);
 }
 
+/**
+ * Editar reseña
+ * Routing Key: resenas.resena.actualizada
+ */
 export async function publishReviewUpdated(review) {
   const routingKey = "resenas.resena.actualizada";
-
   const payload = {
     event: "resena_actualizada",
     id: review.id,
@@ -108,19 +119,22 @@ export async function publishReviewUpdated(review) {
     rating: review.rating,
     has_spoilers: review.has_spoilers,
     tags: review.tags,
-    updated_at: review.updated_at, // seteado en UPDATE
+    updated_at: review.updated_at || new Date().toISOString(),
   };
 
   return publishReviewEvent(routingKey, payload);
 }
 
+/**
+ * Eliminar reseña
+ * Routing Key: resenas.resena.eliminada
+ */
 export async function publishReviewDeleted(id) {
   const routingKey = "resenas.resena.eliminada";
-
   const payload = {
     event: "resena_eliminada",
     id,
-    updated_at: new Date().toISOString(), // o lo que uses
+    updated_at: new Date().toISOString(),
   };
 
   return publishReviewEvent(routingKey, payload);

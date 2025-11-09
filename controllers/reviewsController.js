@@ -71,11 +71,18 @@ async function createReview(req, res) {
 
     const review = await model.createReview(sanitized);
 
-    console.log("Review created:", review);
+    console.log("inicio")
 
-    publishReviewCreated(review).catch((err) => {
-      console.error("[Eventos] resena.creada fallo:", err.message);
-    });
+    try {
+      console.log("arranca el try")
+      await publishReviewCreated(review);
+      console.log("evento publicado")
+    } catch (e) {
+      console.error(
+        "❌ Error publicando evento resenas.resena.creada:",
+        e?.message || e
+      );
+    }
 
     return res.status(201).json(review);
   } catch (err) {
@@ -99,11 +106,14 @@ async function updateReview(req, res) {
     const { id } = req.params;
 
     const current = await model.getReview(id);
-    if (!current) return res.status(404).json({ error: "Reseña no encontrada" });
+    if (!current)
+      return res.status(404).json({ error: "Reseña no encontrada" });
 
     const isPrivileged = ["admin", "moderator"].includes(req.user?.role);
     if (!isPrivileged && current.user_id !== req.user?.userId) {
-      return res.status(403).json({ error: "No autorizado para modificar esta reseña" });
+      return res
+        .status(403)
+        .json({ error: "No autorizado para modificar esta reseña" });
     }
     const { user_id, ...rest } = req.body || {};
     const review = await model.updateReview(id, rest);

@@ -118,10 +118,12 @@ export function authenticate() {
 
       req.user = normalized;
 
+      console.log("usuario autenticado:", req.user);
       // Guardá/actualizá el cache en segundo plano (no bloqueante)
       upsertUsersCache(normalized).catch((err) =>
         console.warn("[users_cache upsert] non-blocking error:", err.message)
       );
+      console.log("despues del upsert");
 
 
       return next();
