@@ -15,7 +15,7 @@ async function getAllMovies() {
     const result = await pool.query(`
       SELECT *
       FROM movies
-      WHERE estado = TRUE
+      WHERE activa = TRUE
       ORDER BY created_at DESC
     `);
     return result.rows;
