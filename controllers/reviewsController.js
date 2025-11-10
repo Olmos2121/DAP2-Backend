@@ -109,13 +109,21 @@ async function updateReview(req, res) {
     if (!current)
       return res.status(404).json({ error: "Reseña no encontrada" });
 
-    const isPrivileged = ["admin", "moderator"].includes(req.user?.role);
-    if (!isPrivileged && current.user_id !== req.user?.userId) {
+    const authUserId = req.user?.user_id || req.user?.id || req.user?.userId;
+    const role = req.user?.role;
+    if (!authUserId) {
+      return res.status(401).json({ error: "No autorizado" });
+    }
+
+    const isPrivileged = ["admin", "moderator"].includes(role);
+
+    if (!isPrivileged && Number(current.user_id) !== Number(authUserId)) {
       return res
         .status(403)
         .json({ error: "No autorizado para modificar esta reseña" });
     }
-    const { user_id, ...rest } = req.body || {};
+
+    const { user_id, userId, ...rest } = req.body || {};
     const review = await model.updateReview(id, rest);
 
     publishReviewUpdated(review).catch((err) => {
