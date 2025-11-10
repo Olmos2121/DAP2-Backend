@@ -1,21 +1,26 @@
-import pool from '../db.js';
+import pool from "../db.js";
 
 async function getMovie(id) {
   try {
-    const result = await pool.query('SELECT * FROM movies WHERE id = $1', [id]);
+    const result = await pool.query("SELECT * FROM movies WHERE id = $1", [id]);
     return result.rows[0];
   } catch (error) {
-    console.error('Error getting movie:', error);
+    console.error("Error getting movie:", error);
     return null;
   }
 }
 
 async function getAllMovies() {
   try {
-    const result = await pool.query('SELECT * FROM movies ORDER BY created_at DESC');
+    const result = await pool.query(`
+      SELECT *
+      FROM movies
+      WHERE estado = TRUE
+      ORDER BY created_at DESC
+    `);
     return result.rows;
   } catch (error) {
-    console.error('Error getting all movies:', error);
+    console.error("Error getting all movies:", error);
     return [];
   }
 }
@@ -30,7 +35,7 @@ async function searchMovies(searchTerm) {
     );
     return result.rows;
   } catch (error) {
-    console.error('Error searching movies:', error);
+    console.error("Error searching movies:", error);
     return [];
   }
 }
@@ -38,12 +43,12 @@ async function searchMovies(searchTerm) {
 async function getMoviesByGenre(genre) {
   try {
     const result = await pool.query(
-      'SELECT * FROM movies WHERE genre ILIKE $1 ORDER BY year DESC',
+      "SELECT * FROM movies WHERE genre ILIKE $1 ORDER BY year DESC",
       [`%${genre}%`]
     );
     return result.rows;
   } catch (error) {
-    console.error('Error getting movies by genre:', error);
+    console.error("Error getting movies by genre:", error);
     return [];
   }
 }
