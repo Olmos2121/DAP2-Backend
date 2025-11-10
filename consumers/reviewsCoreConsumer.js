@@ -48,8 +48,10 @@ async function handleUsuarioSesion(_event, routingKey) {
 
 // =================== SOCIAL (ME GUSTA) ===================
 
-// Obtenemos SOLO el review_id con nombres tolerantes
-function extractReviewId(d = {}) {
+// Obtenemos SOLO el review_id desde el wrapper o desde data
+function extractReviewId(evt = {}) {
+  const d = evt.data || evt; // 👈 si viene envuelto (cloud event), usamos data
+
   return (
     d.reviewId ??
     d.idReview ??
@@ -58,14 +60,30 @@ function extractReviewId(d = {}) {
     d.idResena ??
     d.idPublicacion ??
     d.publicacionId ??
+    d.target_id ??
     null
   );
 }
 
-// Solo guardamos megusta creado/borrado usando review_id
-async function handleSocialLike(event, routingKey) {
+function extractCreatedAt(evt = {}) {
+  const d = evt.data || evt;
+  return d.timestamp || evt.fecha || new Date().toISOString();
+}
+
+function isReviewLike(evt = {}) {
+  const d = evt.data || evt;
+  const targetType = d.metadata?.target_type || d.target_type;
+  if (targetType && targetType !== "review") return false;
+  return true;
+}
+
+export async function handleSocialLike(event, routingKey) {
+  if (!isReviewLike(event)) {
+    return "IGNORED_SOCIAL_NOT_REVIEW";
+  }
+
   const review_id = extractReviewId(event);
-  const created_at = event?.fecha || new Date().toISOString();
+  const created_at = extractCreatedAt(event);
 
   if (!review_id) {
     console.log("⚠️ SKIP_LIKE_INVALID (sin review_id) payload=", event);
@@ -73,7 +91,6 @@ async function handleSocialLike(event, routingKey) {
   }
 
   if (routingKey === "social.megusta.creado") {
-    // Insertamos un registro de like para esa review
     await pool.query(
       `INSERT INTO likes_cache (review_id, created_at, raw_event)
        VALUES ($1, $2, $3)`,
@@ -83,8 +100,6 @@ async function handleSocialLike(event, routingKey) {
   }
 
   if (routingKey === "social.megusta.borrado") {
-    // Borramos UN like asociado a esa review usando solo SQL
-    // (el más reciente, por ejemplo)
     await pool.query(
       `DELETE FROM likes_cache
        WHERE ctid IN (

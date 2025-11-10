@@ -30,6 +30,33 @@ function buildSysDate() {
   ];
 }
 
+function normalizeTags(tags) {
+  if (!tags) return [];
+
+  if (Array.isArray(tags)) return tags;
+
+  if (typeof tags === "string") {
+    if (tags.startsWith("{") && tags.endsWith("}")) {
+      const inner = tags.slice(1, -1).trim();
+      if (!inner) return [];
+      return inner
+        .split(",")
+        .map((s) => s.trim().replace(/^"|"$/g, ""));
+    }
+
+    try {
+      const parsed = JSON.parse(tags);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+    }
+
+    return [tags];
+  }
+
+  return [];
+}
+
+
 /**
  * Envia un evento al Core.
  * @param {string} routingKey - ej: "resenas.resena.creada"
@@ -84,7 +111,6 @@ async function publishReviewEvent(routingKey, data) {
  * Routing Key: resenas.resena.creada
  */
 export async function publishReviewCreated(review) {
-  console.log("entro al publisher")
   const routingKey = "resenas.resena.creada";
   const payload = {
     event: "resena_creada",
@@ -95,11 +121,10 @@ export async function publishReviewCreated(review) {
     body: review.body,
     rating: review.rating,
     has_spoilers: review.has_spoilers,
-    tags: review.tags,
+    tags: normalizeTags(review.tags),
     created_at: review.created_at,
   };
 
-  console.log("antes del return");
   return publishReviewEvent(routingKey, payload);
 }
 
@@ -118,7 +143,7 @@ export async function publishReviewUpdated(review) {
     body: review.body,
     rating: review.rating,
     has_spoilers: review.has_spoilers,
-    tags: review.tags,
+    tags: normalizeTags(review.tags),
     updated_at: review.updated_at || new Date().toISOString(),
   };
 
