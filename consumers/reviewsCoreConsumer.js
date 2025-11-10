@@ -14,43 +14,32 @@ const toDateOrNull = (v) => (v ? v : null);
 
 // =================== USERS ===================
 async function handleUsuarioCreado(event) {
-  console.log(event);
+  console.log("📥 usuarios.usuario.creado recibido:", event);
 
-  const d = event.data || {};
-  const user_id = d.idUsuario;
-  const country = d.pais || null;
+  const d = event?.data || event || {};
 
-  if (!user_id) return "SKIP_USER_INVALID";
+  // idUsuario llega como string, ej: "187" → lo pasamos a entero
+  const user_id = Number.parseInt(d.idUsuario, 10);
+  if (!Number.isInteger(user_id)) {
+    console.log("⚠️ SKIP_USER_INVALID idUsuario inválido:", d.idUsuario);
+    return "SKIP_USER_INVALID";
+  }
 
   const role = "user";
   const permissions = null;
   const is_active = true;
   const full_name = d.nombre || null;
-  
+
   let name = null;
   let last_name = null;
   if (full_name) {
-    const parts = full_name.split(' ');
-    name = parts[0];
-    last_name = parts.length > 1 ? parts.slice(1).join(' ') : null;
+    const parts = full_name.trim().split(/\s+/);
+    name = parts[0] || null;
+    last_name = parts.length > 1 ? parts.slice(1).join(" ") : null;
   }
-  
-  await pool.query(
-    `INSERT INTO users_cache
-      (user_id, role, permissions, is_active, name, last_name, full_name, email, image_url, pais, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW()) -- Ahora NOW() es el 11vo valor
-      ON CONFLICT (user_id) DO UPDATE SET
-        role        = EXCLUDED.role,
-        permissions = EXCLUDED.permissions,
-        is_active   = COALESCE(EXCLUDED.is_active, users_cache.is_active),
-        name        = COALESCE(EXCLUDED.name, users_cache.name),
-        last_name   = COALESCE(EXCLUDED.last_name, users_cache.last_name),
-        full_name   = COALESCE(EXCLUDED.full_name, users_cache.full_name),
-        email       = COALESCE(EXCLUDED.email, users_cache.email),
-        image_url   = COALESCE(EXCLUDED.image_url, users_cache.image_url),
-        pais        = EXCLUDED.pais,
-        updated_at  = NOW()`, // Siempre asigna NOW() en el UPDATE
-    [
+
+  const sql = `
+    INSERT INTO users_cache (
       user_id,
       role,
       permissions,
@@ -58,11 +47,36 @@ async function handleUsuarioCreado(event) {
       name,
       last_name,
       full_name,
-      null, // email
-      null, // image_url
-      country // $10 (pais)
-    ]
-  );
+      email,
+      image_url,
+      updated_at
+    )
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW())
+    ON CONFLICT (user_id) DO UPDATE SET
+      role        = EXCLUDED.role,
+      permissions = EXCLUDED.permissions,
+      is_active   = COALESCE(EXCLUDED.is_active, users_cache.is_active),
+      name        = COALESCE(EXCLUDED.name, users_cache.name),
+      last_name   = COALESCE(EXCLUDED.last_name, users_cache.last_name),
+      full_name   = COALESCE(EXCLUDED.full_name, users_cache.full_name),
+      email       = COALESCE(EXCLUDED.email, users_cache.email),
+      image_url   = COALESCE(EXCLUDED.image_url, users_cache.image_url),
+      updated_at  = NOW()
+  `;
+
+  await pool.query(sql, [
+    user_id,
+    role,
+    permissions,
+    is_active,
+    name,
+    last_name,
+    full_name,
+    null, // email
+    null, // image_url
+  ]);
+
+  console.log(`✅ USER_UPSERTED user_id=${user_id}`);
   return "USER_UPSERTED";
 }
 
