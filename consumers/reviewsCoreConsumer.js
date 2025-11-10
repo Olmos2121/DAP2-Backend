@@ -14,30 +14,60 @@ const toDateOrNull = (v) => (v ? v : null);
 
 // =================== USERS ===================
 async function handleUsuarioCreado(event) {
-  const d = event || {};
+  console.log(event);
+
+  // Acceder a la propiedad 'data'
+  const d = event.data || {};
+  
+  // Extraer los nuevos datos
   const user_id = d.idUsuario;
+  const country = d.pais || null; // ⬅️ Nuevo campo
+
   if (!user_id) return "SKIP_USER_INVALID";
 
   const role = "user";
   const permissions = null;
   const is_active = true;
+  
+  // Separar el 'nombre' completo si es necesario, si no, usarlo como full_name
   const full_name = d.nombre || null;
-
+  
+  // Intentaremos dividir el nombre completo en nombre y apellido (opcional)
+  let name = null;
+  let last_name = null;
+  if (full_name) {
+    const parts = full_name.split(' ');
+    name = parts[0];
+    last_name = parts.length > 1 ? parts.slice(1).join(' ') : null;
+  }
+  
   await pool.query(
     `INSERT INTO users_cache
-      (user_id, role, permissions, is_active, name, last_name, full_name, email, image_url, updated_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW())
-     ON CONFLICT (user_id) DO UPDATE SET
-       role        = EXCLUDED.role,
-       permissions = EXCLUDED.permissions,
-       is_active   = COALESCE(EXCLUDED.is_active, users_cache.is_active),
-       name        = COALESCE(EXCLUDED.name, users_cache.name),
-       last_name   = COALESCE(EXCLUDED.last_name, users_cache.last_name),
-       full_name   = COALESCE(EXCLUDED.full_name, users_cache.full_name),
-       email       = COALESCE(EXCLUDED.email, users_cache.email),
-       image_url   = COALESCE(EXCLUDED.image_url, users_cache.image_url),
-       updated_at  = NOW()`,
-    [user_id, role, permissions, is_active, null, null, full_name, null, null]
+      (user_id, role, permissions, is_active, name, last_name, full_name, email, image_url, updated_at, pais)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), $10)
+      ON CONFLICT (user_id) DO UPDATE SET
+        role        = EXCLUDED.role,
+        permissions = EXCLUDED.permissions,
+        is_active   = COALESCE(EXCLUDED.is_active, users_cache.is_active),
+        name        = COALESCE(EXCLUDED.name, users_cache.name),
+        last_name   = COALESCE(EXCLUDED.last_name, users_cache.last_name),
+        full_name   = COALESCE(EXCLUDED.full_name, users_cache.full_name),
+        email       = COALESCE(EXCLUDED.email, users_cache.email),
+        image_url   = COALESCE(EXCLUDED.image_url, users_cache.image_url),
+        pais        = EXCLUDED.pais, -- ⬅️ Actualización del país
+        updated_at  = NOW()`,
+    [
+      user_id,
+      role,
+      permissions,
+      is_active,
+      name,         // ⬅️ Nombre (parte 1)
+      last_name,    // ⬅️ Apellido (parte 2)
+      full_name,
+      null,
+      null,
+      country       // ⬅️ País
+    ]
   );
   return "USER_UPSERTED";
 }
