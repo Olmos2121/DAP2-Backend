@@ -84,6 +84,55 @@ async function handleUsuarioSesion(_event, routingKey) {
   return `USER_SESSION_${routingKey.split(".").pop().toUpperCase()}`;
 }
 
+async function handleUsuarioEliminado(event) {
+  const d = event?.data || event || {};
+  const user_id = Number.parseInt(d.idUsuario, 10);
+
+  if (!Number.isInteger(user_id)) {
+    console.log("⚠️ SKIP_USER_DELETE_INVALID idUsuario inválido:", d.idUsuario);
+    return "SKIP_USER_DELETE_INVALID";
+  }
+
+  await pool.query(
+    `
+    UPDATE users_cache
+       SET is_active = FALSE,
+           updated_at = NOW()
+     WHERE user_id = $1
+    `,
+    [user_id]
+  );
+
+  console.log(`✅ USER_DEACTIVATED user_id=${user_id}`);
+  return "USER_DEACTIVATED";
+}
+
+async function handleUsuarioReactivado(event) {
+  const d = event?.data || event || {};
+  const user_id = Number.parseInt(d.idUsuario, 10);
+
+  if (!Number.isInteger(user_id)) {
+    console.log(
+      "⚠️ SKIP_USER_REACTIVATE_INVALID idUsuario inválido:",
+      d.idUsuario
+    );
+    return "SKIP_USER_REACTIVATE_INVALID";
+  }
+
+  await pool.query(
+    `
+    UPDATE users_cache
+       SET is_active = TRUE,
+           updated_at = NOW()
+     WHERE user_id = $1
+    `,
+    [user_id]
+  );
+
+  console.log(`✅ USER_REACTIVATED user_id=${user_id}`);
+  return "USER_REACTIVATED";
+}
+
 // =================== SOCIAL (ME GUSTA) ===================
 
 // Intenta parsear el evento si vino como string JSON
@@ -317,6 +366,12 @@ async function routeAndHandle(routingKey, payload) {
   // Usuarios
   if (routingKey === "usuarios.usuario.creado") {
     return await handleUsuarioCreado(payload);
+  }
+  if (routingKey === "usuarios.usuario.eliminado") {
+    return await handleUsuarioEliminado(payload);
+  }
+  if (routingKey === "usuarios.usuario.reactivado") {
+    return await handleUsuarioReactivado(payload);
   }
   if (
     routingKey === "usuarios.sesion.iniciada" ||
