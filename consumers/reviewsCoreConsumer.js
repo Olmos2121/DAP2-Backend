@@ -16,23 +16,17 @@ const toDateOrNull = (v) => (v ? v : null);
 async function handleUsuarioCreado(event) {
   console.log(event);
 
-  // Acceder a la propiedad 'data'
   const d = event.data || {};
-  
-  // Extraer los nuevos datos
   const user_id = d.idUsuario;
-  const country = d.pais || null; // ⬅️ Nuevo campo
+  const country = d.pais || null;
 
   if (!user_id) return "SKIP_USER_INVALID";
 
   const role = "user";
   const permissions = null;
   const is_active = true;
-  
-  // Separar el 'nombre' completo si es necesario, si no, usarlo como full_name
   const full_name = d.nombre || null;
   
-  // Intentaremos dividir el nombre completo en nombre y apellido (opcional)
   let name = null;
   let last_name = null;
   if (full_name) {
@@ -43,8 +37,8 @@ async function handleUsuarioCreado(event) {
   
   await pool.query(
     `INSERT INTO users_cache
-      (user_id, role, permissions, is_active, name, last_name, full_name, email, image_url, updated_at, pais)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), $10)
+      (user_id, role, permissions, is_active, name, last_name, full_name, email, image_url, pais, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW()) -- Ahora NOW() es el 11vo valor
       ON CONFLICT (user_id) DO UPDATE SET
         role        = EXCLUDED.role,
         permissions = EXCLUDED.permissions,
@@ -54,19 +48,19 @@ async function handleUsuarioCreado(event) {
         full_name   = COALESCE(EXCLUDED.full_name, users_cache.full_name),
         email       = COALESCE(EXCLUDED.email, users_cache.email),
         image_url   = COALESCE(EXCLUDED.image_url, users_cache.image_url),
-        pais        = EXCLUDED.pais, -- ⬅️ Actualización del país
-        updated_at  = NOW()`,
+        pais        = EXCLUDED.pais,
+        updated_at  = NOW()`, // Siempre asigna NOW() en el UPDATE
     [
       user_id,
       role,
       permissions,
       is_active,
-      name,         // ⬅️ Nombre (parte 1)
-      last_name,    // ⬅️ Apellido (parte 2)
+      name,
+      last_name,
       full_name,
-      null,
-      null,
-      country       // ⬅️ País
+      null, // email
+      null, // image_url
+      country // $10 (pais)
     ]
   );
   return "USER_UPSERTED";
