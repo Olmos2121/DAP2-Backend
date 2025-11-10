@@ -144,7 +144,7 @@ export async function publishReviewUpdated(review) {
     event: "resena_actualizada",
     id: review.id,
     movie_id: review.movie_id,
-    user_id: formatUserId(review.user_id),
+    user_id: review.user_id,
     title: review.title,
     body: review.body,
     rating: review.rating,
