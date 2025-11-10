@@ -40,6 +40,20 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+const corsOptions = {
+  origin: [
+    "http://localhost:3000",
+    "http://localhost:8080",
+    process.env.FRONTEND_URL,
+    process.env.FRONTEND_URL_PROD,
+  ].filter(Boolean),
+  credentials: true,
+  optionsSuccessStatus: 200,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+};
+app.use(cors(corsOptions));
+
 app.set("trust proxy", 1);
 app.use(securityHeaders);
 app.use(rateLimiter);
@@ -61,20 +75,6 @@ app.use(
 
 app.use(validateContentType);
 app.use(sanitizeRequest);
-
-const corsOptions = {
-  origin: [
-    "http://localhost:3000",
-    "http://localhost:8080",
-    process.env.FRONTEND_URL,
-    process.env.FRONTEND_URL_PROD,
-  ].filter(Boolean),
-  credentials: true,
-  optionsSuccessStatus: 200,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-};
-app.use(cors(corsOptions));
 
 if (process.env.NODE_ENV === "production") {
   app.use((req, res, next) => {
