@@ -288,6 +288,7 @@ async function handlePelicula(routingKey, evt) {
       return "SKIP_MOVIE_DELETED_INVALID";
     }
     await pool.query(`DELETE FROM movies WHERE id = $1`, [id]);
+    await pool.query(`DELETE FROM reviews WHERE movie_id = $1`, [id]);
     return "MOVIE_DELETED";
   }
 
