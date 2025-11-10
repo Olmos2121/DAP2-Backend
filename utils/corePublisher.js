@@ -56,6 +56,12 @@ function normalizeTags(tags) {
   return [];
 }
 
+function formatUserId(id) {
+  if (!id) return null;
+  const str = String(id).trim();
+  return str.startsWith("u") ? str : `u${str}`;
+}
+
 
 /**
  * Envia un evento al Core.
@@ -116,7 +122,7 @@ export async function publishReviewCreated(review) {
     event: "resena_creada",
     id: review.id,
     movie_id: review.movie_id,
-    user_id: review.user_id,
+    user_id: formatUserId(review.user_id),
     title: review.title,
     body: review.body,
     rating: review.rating,
@@ -138,7 +144,7 @@ export async function publishReviewUpdated(review) {
     event: "resena_actualizada",
     id: review.id,
     movie_id: review.movie_id,
-    user_id: review.user_id,
+    user_id: formatUserId(review.user_id),
     title: review.title,
     body: review.body,
     rating: review.rating,
