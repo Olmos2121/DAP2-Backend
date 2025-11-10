@@ -150,7 +150,11 @@ export async function handleSocialLike(event, routingKey) {
     await pool.query(
       `INSERT INTO likes_cache (review_id, created_at, raw_event)
        VALUES ($1, $2, $3)`,
-      [review_id, created_at, JSON.stringify({ rk: routingKey, d: parsedEvent })]
+      [
+        review_id,
+        created_at,
+        JSON.stringify({ rk: routingKey, d: parsedEvent }),
+      ]
     );
     return "LIKE_CREATED";
   }
@@ -223,8 +227,8 @@ async function handlePelicula(routingKey, evt) {
 
     await pool.query(
       `INSERT INTO movies
-        (id, title, year, genre, director, duration, poster_url, description, release_date)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+        (id, title, year, genre, director, duration, poster_url, description, release_date, activa)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
        ON CONFLICT (id) DO UPDATE SET
          title        = EXCLUDED.title,
          year         = EXCLUDED.year,
@@ -233,7 +237,9 @@ async function handlePelicula(routingKey, evt) {
          duration     = EXCLUDED.duration,
          poster_url   = EXCLUDED.poster_url,
          description  = EXCLUDED.description,
-         release_date = EXCLUDED.release_date`,
+         release_date = EXCLUDED.release_date,
+         activa = TRUE
+      `,
       [
         id,
         title,
@@ -244,6 +250,7 @@ async function handlePelicula(routingKey, evt) {
         poster_url,
         description,
         release_date,
+        true,
       ]
     );
     return "MOVIE_CREATED";
@@ -265,7 +272,8 @@ async function handlePelicula(routingKey, evt) {
            duration     = COALESCE($6, duration),
            poster_url   = COALESCE($7, poster_url),
            description  = COALESCE($8, description),
-           release_date = COALESCE($9, release_date)
+           release_date = COALESCE($9, release_date),
+           activa       = COALESCE($10, activa)
        WHERE id = $1`,
       [
         id,
@@ -277,6 +285,7 @@ async function handlePelicula(routingKey, evt) {
         poster_url,
         description,
         release_date,
+        true,
       ]
     );
     return "MOVIE_UPDATED";
@@ -287,8 +296,16 @@ async function handlePelicula(routingKey, evt) {
       console.log("⚠️ SKIP_MOVIE_DELETED_INVALID payload=", evt);
       return "SKIP_MOVIE_DELETED_INVALID";
     }
-    await pool.query(`DELETE FROM movies WHERE id = $1`, [id]);
-    await pool.query(`DELETE FROM reviews WHERE movie_id = $1`, [id]);
+    await pool.query(`UPDATE movies SET activa = FALSE WHERE id = $1`, [id]);
+    await pool.query(
+      `UPDATE reviews
+SET estado = FALSE,
+    updated_at = NOW()
+WHERE movie_id = $1
+  AND estado = TRUE;
+`,
+      [id]
+    );
     return "MOVIE_DELETED";
   }
 

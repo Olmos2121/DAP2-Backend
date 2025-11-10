@@ -165,7 +165,7 @@ async function filterReviews(filters, options = {}) {
         FROM likes_cache
         GROUP BY review_id
       ) l ON r.id = l.review_id
-      WHERE 1=1
+      WHERE r.estado = TRUE   -- 👈 solo reviews activas
     `;
 
     if (movie_id) {

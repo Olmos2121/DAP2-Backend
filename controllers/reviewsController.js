@@ -71,12 +71,12 @@ async function createReview(req, res) {
 
     const review = await model.createReview(sanitized);
 
-    console.log("inicio")
+    console.log("inicio");
 
     try {
-      console.log("arranca el try")
+      console.log("arranca el try");
       await publishReviewCreated(review);
-      console.log("evento publicado")
+      console.log("evento publicado");
     } catch (e) {
       console.error(
         "❌ Error publicando evento resenas.resena.creada:",
@@ -163,7 +163,6 @@ async function filterReviews(req, res) {
     } = req.query;
 
     const orderBy = VALID_SORTS[sort] || VALID_SORTS.recent;
-
     const pageSize = Math.min(parsePositiveInt(limit, 20), 100);
     const pageOffset = parsePositiveInt(offset, 0);
 
@@ -183,7 +182,7 @@ async function filterReviews(req, res) {
         ? false
         : undefined;
 
-    // Procesar tags si vienen como string o array
+    // Procesar tags
     let tagsArray = [];
     if (tags) {
       if (Array.isArray(tags)) tagsArray = tags;
@@ -207,6 +206,7 @@ async function filterReviews(req, res) {
       date_range,
     };
 
+    // El modelo ya aplica r.estado = TRUE automáticamente
     const { rows, total } = await model.filterReviews(filters, {
       orderBy,
       limit: pageSize,
