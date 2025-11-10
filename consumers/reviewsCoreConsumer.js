@@ -48,9 +48,23 @@ async function handleUsuarioSesion(_event, routingKey) {
 
 // =================== SOCIAL (ME GUSTA) ===================
 
+// Intenta parsear el evento si vino como string JSON
+function parseEvent(raw) {
+  if (!raw) return {};
+  if (typeof raw === "string") {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return {};
+    }
+  }
+  return raw;
+}
+
 // Obtenemos SOLO el review_id desde el wrapper o desde data
 function extractReviewId(evt = {}) {
-  const d = evt.data || evt; // 👈 si viene envuelto (cloud event), usamos data
+  const parsed = parseEvent(evt);
+  const d = parsed.data || parsed; // si viene envuelto (cloud event), usamos data
 
   return (
     d.reviewId ??
@@ -60,33 +74,37 @@ function extractReviewId(evt = {}) {
     d.idResena ??
     d.idPublicacion ??
     d.publicacionId ??
-    d.target_id ??
+    d.target_id ?? // <- el que manda social
     null
   );
 }
 
 function extractCreatedAt(evt = {}) {
-  const d = evt.data || evt;
-  return d.timestamp || evt.fecha || new Date().toISOString();
+  const parsed = parseEvent(evt);
+  const d = parsed.data || parsed;
+  return d.timestamp || parsed.fecha || new Date().toISOString();
 }
 
 function isReviewLike(evt = {}) {
-  const d = evt.data || evt;
+  const parsed = parseEvent(evt);
+  const d = parsed.data || parsed;
   const targetType = d.metadata?.target_type || d.target_type;
   if (targetType && targetType !== "review") return false;
   return true;
 }
 
 export async function handleSocialLike(event, routingKey) {
-  if (!isReviewLike(event)) {
+  const parsedEvent = parseEvent(event);
+
+  if (!isReviewLike(parsedEvent)) {
     return "IGNORED_SOCIAL_NOT_REVIEW";
   }
 
-  const review_id = extractReviewId(event);
-  const created_at = extractCreatedAt(event);
+  const review_id = extractReviewId(parsedEvent);
+  const created_at = extractCreatedAt(parsedEvent);
 
   if (!review_id) {
-    console.log("⚠️ SKIP_LIKE_INVALID (sin review_id) payload=", event);
+    console.log("⚠️ SKIP_LIKE_INVALID (sin review_id) payload=", parsedEvent);
     return "SKIP_LIKE_INVALID";
   }
 
@@ -94,7 +112,7 @@ export async function handleSocialLike(event, routingKey) {
     await pool.query(
       `INSERT INTO likes_cache (review_id, created_at, raw_event)
        VALUES ($1, $2, $3)`,
-      [review_id, created_at, JSON.stringify({ rk: routingKey, d: event })]
+      [review_id, created_at, JSON.stringify({ rk: routingKey, d: parsedEvent })]
     );
     return "LIKE_CREATED";
   }
