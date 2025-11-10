@@ -6,8 +6,8 @@ const JWKS_URL = process.env.USERS_JWKS_URL;
 if (!JWKS_URL) throw new Error("USERS_JWKS_URL no configurado");
 
 const JWKS = createRemoteJWKSet(new URL(JWKS_URL), {
-  cacheMaxAge: 10 * 60 * 1000, // 10min
-  cooldownDuration: 60 * 1000, // 1min
+  cacheMaxAge: 24 * 60 * 60 * 1000, // 1 días
+  cooldownDuration: 60 * 60 * 1000, // 1h
 });
 
 /** Extrae Bearer token de Authorization o X-Access-Token */
