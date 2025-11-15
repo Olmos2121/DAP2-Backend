@@ -80,6 +80,84 @@ async function handleUsuarioCreado(event) {
   return "USER_UPSERTED";
 }
 
+async function handleUsuarioActualizado(event) {
+  console.log("📥 usuarios.usuario.actualizado recibido:", event);
+
+  const d = event?.data || event || {};
+
+  // idUsuario puede venir como string -> lo pasamos a entero
+  const user_id = Number.parseInt(d.idUsuario ?? d.userId ?? d.user_id, 10);
+  if (!Number.isInteger(user_id)) {
+    console.log("⚠️ SKIP_USER_UPDATE_INVALID idUsuario inválido:", d.idUsuario);
+    return "SKIP_USER_UPDATE_INVALID";
+  }
+
+  // Campos opcionales (solo se aplican si vienen definidos)
+  const full_name = d.nombre ?? d.fullName ?? d.full_name ?? null;
+  const email = d.email ?? null;
+  const image_url = d.imagen ?? d.imageUrl ?? d.image_url ?? null;
+  const role = d.rol ?? d.role ?? null;
+  const permissions = d.permissions ?? null;
+
+  // is_active puede venir como 'activo', 'is_active', etc.
+  const is_active =
+    typeof d.activo === "boolean"
+      ? d.activo
+      : typeof d.is_active === "boolean"
+      ? d.is_active
+      : null;
+
+  // Derivamos name / last_name si vino full_name
+  let name = null,
+    last_name = null;
+  if (typeof full_name === "string" && full_name.trim()) {
+    const parts = full_name.trim().split(/\s+/);
+    name = parts[0] || null;
+    last_name = parts.length > 1 ? parts.slice(1).join(" ") : null;
+  }
+
+  const sql = `
+    INSERT INTO users_cache (
+      user_id,
+      role,
+      permissions,
+      is_active,
+      name,
+      last_name,
+      full_name,
+      email,
+      image_url,
+      updated_at
+    )
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,NOW())
+    ON CONFLICT (user_id) DO UPDATE SET
+      role        = COALESCE(EXCLUDED.role,        users_cache.role),
+      permissions = COALESCE(EXCLUDED.permissions, users_cache.permissions),
+      is_active   = COALESCE(EXCLUDED.is_active,   users_cache.is_active),
+      name        = COALESCE(EXCLUDED.name,        users_cache.name),
+      last_name   = COALESCE(EXCLUDED.last_name,   users_cache.last_name),
+      full_name   = COALESCE(EXCLUDED.full_name,   users_cache.full_name),
+      email       = COALESCE(EXCLUDED.email,       users_cache.email),
+      image_url   = COALESCE(EXCLUDED.image_url,   users_cache.image_url),
+      updated_at  = NOW()
+  `;
+
+  await pool.query(sql, [
+    user_id,
+    role,
+    permissions,
+    is_active,
+    name,
+    last_name,
+    full_name,
+    email,
+    image_url,
+  ]);
+
+  console.log(`✅ USER_UPDATED user_id=${user_id}`);
+  return "USER_UPDATED";
+}
+
 async function handleUsuarioSesion(_event, routingKey) {
   return `USER_SESSION_${routingKey.split(".").pop().toUpperCase()}`;
 }
@@ -311,6 +389,9 @@ async function handlePelicula(routingKey, evt) {
       return "SKIP_MOVIE_UPDATED_INVALID";
     }
 
+    const d = evt?.data || evt;
+    const activeFlag = d.activa ?? d.estado ?? d.active ?? d.is_active ?? null; // Si no viene, queda null y NO se cambia
+
     await pool.query(
       `UPDATE movies
          SET
@@ -337,6 +418,16 @@ async function handlePelicula(routingKey, evt) {
         true,
       ]
     );
+
+    if (typeof activeFlag === "boolean") {
+      await pool.query(
+        `UPDATE reviews
+         SET estado = $2
+       WHERE movie_id = $1`,
+        [id, activeFlag]
+      );
+    }
+
     return "MOVIE_UPDATED";
   }
 
@@ -366,6 +457,9 @@ async function routeAndHandle(routingKey, payload) {
   // Usuarios
   if (routingKey === "usuarios.usuario.creado") {
     return await handleUsuarioCreado(payload);
+  }
+  if (routingKey === "usuarios.usuario.actualizado") {
+    return await handleUsuarioActualizado(payload);
   }
   if (routingKey === "usuarios.usuario.eliminado") {
     return await handleUsuarioEliminado(payload);
