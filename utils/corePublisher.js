@@ -9,7 +9,9 @@ const CORE_URL =
 const CORE_API_KEY = process.env.CORE_API_KEY || null;
 
 if (!CORE_API_KEY) {
-  console.warn("⚠️  CORE_API_KEY no configurada. El Core rechazará los eventos (401).");
+  console.warn(
+    "⚠️  CORE_API_KEY no configurada. El Core rechazará los eventos (401)."
+  );
 }
 
 // =================== HELPERS ===================
@@ -39,16 +41,13 @@ function normalizeTags(tags) {
     if (tags.startsWith("{") && tags.endsWith("}")) {
       const inner = tags.slice(1, -1).trim();
       if (!inner) return [];
-      return inner
-        .split(",")
-        .map((s) => s.trim().replace(/^"|"$/g, ""));
+      return inner.split(",").map((s) => s.trim().replace(/^"|"$/g, ""));
     }
 
     try {
       const parsed = JSON.parse(tags);
       if (Array.isArray(parsed)) return parsed;
-    } catch {
-    }
+    } catch {}
 
     return [tags];
   }
@@ -62,6 +61,7 @@ function normalizeTags(tags) {
  * @param {object} data - contenido del evento según contrato
  */
 async function publishReviewEvent(routingKey, data) {
+  console.log(`📤 Preparando evento al Core: ${routingKey}`);
   const event = {
     id: crypto.randomUUID(),
     type: routingKey,
@@ -72,6 +72,15 @@ async function publishReviewEvent(routingKey, data) {
   };
 
   const url = `${CORE_URL}?routingKey=${encodeURIComponent(routingKey)}`;
+
+  console.log("📤 Request al Core:", {
+    url,
+    headers: {
+      "Content-Type": "application/json",
+      "X-API-KEY": CORE_API_KEY || "(VACÍA)",
+    },
+    body: event,
+  });
 
   let response;
   try {
@@ -90,11 +99,15 @@ async function publishReviewEvent(routingKey, data) {
 
   const text = await response.text().catch(() => "");
 
+  console.log("📥 Status del Core:", response.status, "body:", text);
+
   if (!response.ok) {
     throw new Error(
       `Error enviando evento al Core: ${response.status} - ${text}`
     );
   }
+
+  console.log(`✅ Evento aceptado por el Core: ${routingKey}`);
 
   try {
     return JSON.parse(text || "{}");
