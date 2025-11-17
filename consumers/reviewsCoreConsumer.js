@@ -231,7 +231,8 @@ function extractReviewId(evt = {}) {
   const parsed = parseEvent(evt);
   const d = parsed.data || parsed; // si viene envuelto (cloud event), usamos data
 
-  return (
+  const rawId =
+    d.review_id ??
     d.reviewId ??
     d.idReview ??
     d.review_id ??
@@ -239,11 +240,17 @@ function extractReviewId(evt = {}) {
     d.idResena ??
     d.idPublicacion ??
     d.publicacionId ??
-    d.target_id ?? // <- el que manda social
-    null
-  );
-}
+    d.publication_id ??
+    d.publicationId ??
+    d.target_id ??
+    d.targetId ??
+    null;
 
+  if (rawId == null) return null;
+
+  const num = Number.parseInt(rawId, 10);
+  return Number.isNaN(num) ? rawId : num;
+}
 function extractCreatedAt(evt = {}) {
   const parsed = parseEvent(evt);
   const d = parsed.data || parsed;
